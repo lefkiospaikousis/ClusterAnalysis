@@ -65,20 +65,45 @@ app_ui <- function(request) {
             ),
             tabPanel("Cluster",
                      fluidRow(
-                       shinyWidgets::pickerInput("vars_cluster", "Select variables",
-                                                 choices = NULL, selected = NULL,
-                                                 multiple = TRUE,
-                                                 options = list(`actions-box` = TRUE,
-                                                                `live-Search`  = TRUE,
-                                                                liveSearchStyle = "contains"
-                                                 )
+                       col_3(
+                         selectInput("clust_method", "Cluster Method", 
+                                     choices = c("K-means" = "k-means",
+                                                 "K-medoids" = "k-meds",
+                                                 "Hierarchical Clustering" = "h-clust"
+                                     )
+                         ),
+                         shinyWidgets::pickerInput("vars_cluster", "Select variables",
+                                                   choices = NULL, selected = NULL,
+                                                   multiple = TRUE,
+                                                   options = list(`actions-box` = TRUE,
+                                                                  `live-Search`  = TRUE,
+                                                                  liveSearchStyle = "contains"
+                                                   )
+                         )
                        )
                      ),
                      fluidRow(
-                       mod_kmeans_ui("kmeans_ui_1")
+                       col_2(
+                         numericInput("seed", "Set seed", value = 123, 1, 1000, 1)
+                       )
+                     ),
+                     #verbatimTextOutput("cluster_group"),
+                     fluidRow(
+                       conditionalPanel(
+                         condition = "input.clust_method == 'k-means'",
+                         mod_kmeans_ui("kmeans_ui_1")
+                       ),
+                       conditionalPanel(
+                         condition = "input.clust_method == 'k-meds'",
+                         mod_kmedoids_ui("kmedoids_ui_1")
+                       ),
+                       conditionalPanel(
+                         condition = "input.clust_method == 'h-clust'",
+                         mod_hclust_ui("hlust_ui_1")
+                       )
                      ),
                      fluidRow(
-                       verbatimTextOutput("cluster")
+                       verbatimTextOutput("res_cluster")
                      )
                      
             )
@@ -109,7 +134,9 @@ golem_add_external_resources <- function(){
     bundle_resources(
       path = app_sys('app/www'),
       app_title = 'Cluster-ShinyApp'
-    )
+    ),
+    shinyFeedback::useShinyFeedback(),
+    shinyjs::useShinyjs()
     # Add here other external resources
     # for example, you can add shinyalert::useShinyalert() 
   )

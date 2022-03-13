@@ -7,20 +7,55 @@
 #' @noRd
 app_server <- function( input, output, session ) {
   
-
-# Modules -----------------------------------------------------------------
-
-  res_kmeans <- mod_kmeans_server("kmeans_ui_1", dta, vars_for_cluster)
   
-  output$cluster <- renderPrint(res_kmeans$res())
-
-# Constants ---------------------------------------------------------------
-
+  # Modules -----------------------------------------------------------------
+  
+  res_kmeans <- mod_kmeans_server("kmeans_ui_1", dta, vars_for_cluster, seed = reactive(input$seed))
+  
+  res_kmeds <- mod_kmedoids_server("kmedoids_ui_1", dta, vars_for_cluster, seed = reactive(input$seed))
+  
+  res_hclust <- mod_hclust_server("hlust_ui_1", dta, vars_for_cluster, seed = reactive(input$seed))
+  
+  output$res_cluster <- renderPrint({
+    
+    switch (input$clust_method,
+      "k-means" = res_kmeans$res(),
+      'k-meds' = res_kmeds$res(),
+      'h-clust' = res_hclust$res(),
+      validate(glue::glue("{input$clust_method} Not yet ready"))
+    )
+    
+    
+  })
+  
+  output$cluster_group <- renderPrint({
+    
+    switch (input$clust_method,
+            "k-means" = res_kmeans$res()$cluster,
+            'k-meds' = res_kmeds$res()$cluster,
+            'h-clust' = res_hclust$res()$cluster,
+            validate(glue::glue("{input$clust_method} Not yet ready"))
+    )
+    
+    
+  })
+  
+  
+  
+  
+  # Constants ---------------------------------------------------------------
+  
   # Cluster Methods
-  clust_methods <- c("Hierarchical", "k- Medoids (PAM)", "k - means")
+  clust_methods <- c("Hierarchical", "k-Medoids (PAM)", "k-means")
   
-  # HC methods
-  hc_methods  <- c("ward.D", "ward.D2", "single", "complete", "average") #, "mcquitty", "median", "centroid"
+  # HC clustering methods in cluster::agnes
+  hc_methods  <- c("Ward's method" = "ward", 
+                  "Single linkage" = "single", 
+                  "Complete linkage" = "complete", 
+                  "Average (UPGMA)" = "average",
+                  "Weighted Average linkage (WPGMA)" = "average"
+                  ) #, "mcquitty", "median", "centroid"
+  
   hc_distance <- c("euclidean", "manhattan")
   n_clusters  <- seq(2,7)
   
@@ -51,9 +86,9 @@ app_server <- function( input, output, session ) {
                      ,"ch"
   )
   
-
-# Server declaration ------------------------------------------------------
-
+  
+  # Server declaration ------------------------------------------------------
+  
   
   dta <- reactive({
     
@@ -77,7 +112,7 @@ app_server <- function( input, output, session ) {
     
     input$vars_cluster
     
-    })
+  })
   
   observeEvent(dta(), {
     

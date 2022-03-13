@@ -104,6 +104,9 @@ find_vars_of_type <- function(data, type =  c("numeric", "character", "factor"))
 }
 
 
+
+#' @noRd
+#' @return A named vector of cluster membership. The names are the case id
 get_cluster_indx <- function(dta, cluster_indx) {
   
   stopifnot(inherits(dta, "data.frame"))
@@ -117,6 +120,121 @@ get_cluster_indx <- function(dta, cluster_indx) {
   dta$cluster <- NA_integer_
   dta$cluster[which(complete)] <- cluster_indx
   
-  dta$cluster
+  setNames(dta$cluster, seq_len(nrow(dta)))
+  
   
 }
+
+#' @noRd
+#' @return A named vector of cluster membership. The names are the case id
+get_pam_cluster_indx <- function(dta, cluster_indx){
+  
+  stopifnot(inherits(dta, "data.frame"))
+  stopifnot(inherits(cluster_indx, "integer"))
+  stopifnot(length(cluster_indx) > 0)
+  
+  cluster_indx %>% 
+    tibble::enframe() %>% 
+    tidyr::complete(name = as.character(seq_len(nrow(dta)))) %>% # TODO ugly!!! 
+    mutate(name = as.numeric(name)) %>% 
+    arrange(name) %>% 
+    tibble::deframe()
+  
+}
+
+#Function to wrap titles, so they show completely when saving plot in ggplot
+# TODO Stolen from https://github.com/Public-Health-Scotland/scotpho-profiles-tool/blob/master/shiny_app/global.R
+title_wrapper <- function(x, ...) 
+{
+  paste(strwrap(x, ...), collapse = "\n")
+}
+
+#Function to create plot when no data available for ggplot visuals
+plot_nodata_gg <- function() {
+  ggplot()+
+    xlab("No data available")+
+    theme(panel.background = element_blank(),
+          axis.title.x=element_text(size=20, colour ='#555555'))
+}
+
+
+calc_diss_matrix <- function(dta, metric = c("euclidean", "manhattan", "gower")){
+  
+  metric <- match.arg(metric)
+  
+  # default metric = euclidean unless we have categorical data
+  # where the metric changes on its own to 'gower'. see ?cluster::daisy
+  
+  # Also, character columns need to be factor, in order for daisy to work
+  
+  cluster::daisy(
+    dta %>% mutate(across(where(is.character), factor)),
+    metric = metric
+  )
+  
+}
+
+
+#' Get the silhouette widths
+#' 
+#' This function extracts or calculates the silhouette widths from the clustering objects
+#' 
+#' \code{cluster::pam} retains a table of sil widths in obj$silinfo$widths
+#' For the other cluster methods we calculate them ourselves using
+#' cluster::silhouette    
+#' 
+#' The clustering `obj` must have a named `cluster` vector. Named with the observation id
+#' and the value the observation cluster membership  
+#' 
+#' @return A tibble with the observation id, the cluster membership, 
+#' the cluster neighbor and the silhouette width
+#' 
+#' @param obj A clustering object
+#' @param diss_matrix A dissimilarity matrix, of class `dist`
+get_sil_widths <- function(obj, diss_matrix){
+  
+  stopifnot(inherits(obj, c("pam", "kmeans", "agnes")))
+  stopifnot(inherits(diss_matrix, "dist"))
+  
+  if(inherits(obj, c("kmeans", "agnes"))){ # kmeans and HC clustering
+    
+    stopifnot(!is.null(obj[["cluster"]]))
+    
+    # cluster::silhoutte does not keep the id indx of the 
+    # obj$cluster. I do a workaround.
+    
+    indx <- names(obj$cluster) %>% as.numeric()
+    
+    res_sil <- cluster::silhouette(obj$cluster, diss_matrix)
+    
+    out <- 
+      tibble(
+        cluster = res_sil[,1],
+        neighbor = res_sil[,2],
+        sil_width = res_sil[,3]
+      ) %>% 
+      tibble::add_column(id = indx, .before = 1) 
+    
+  }
+  
+  if(inherits(obj, "partition")){ # K medoids (cluster::pam) Clustering
+    
+    # cluster::pam object holds the sil widths as array
+    # where the row ids are the observation ids. The important
+    # thing is that it respects the na.omit of the df and we know the true obs id
+    out <- 
+      obj$silinfo$widths %>% 
+      as_tibble(rownames = "id") %>% 
+      mutate(id = as.numeric(id)) %>% 
+      arrange(id)
+  }
+  
+  # if(inherits(obj, "agnes")){ # Hierarchical Clustering
+  #   
+  # }
+  # 
+  
+  out
+}
+
+
