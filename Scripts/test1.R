@@ -59,9 +59,34 @@ res_agnes$cluster <- stats::cutree(res_agnes, 3) %>% setNames(ids)
 
 ## silhouette widths ---
 
-get_sil_widths(res_kmeans, diss_matrix)
-get_sil_widths(res_pam)
+res_kmeans$silhouette <- get_sil_widths(res_kmeans, diss_matrix)
+
 get_sil_widths(res_agnes, diss_matrix)
+
+res_sil <- get_sil_widths(res_pam, diss_matrix)
+
+by_group <- 
+  res_sil %>% 
+  group_by(cluster = as.character(cluster)) %>% 
+  summarise(
+    across(sil_width, silhouette_summary, .names = "{.fn}")
+  )
+  
+overall <- 
+  res_sil %>% 
+  summarise(
+    across(sil_width, silhouette_summary, .names = "{.fn}")
+  ) %>% 
+  mutate(cluster = "ALL")
+
+
+res_pam$clustering %>% 
+  as.character() %>% 
+  forcats::fct_count(prop = TRUE) %>% 
+  transmute("cluster" = as.character(f), "size" = n, "prop" = p) %>% 
+  left_join(by_group, by = "cluster") %>% 
+  bind_rows(overall)
+
 
 class(diss_matrix)
 

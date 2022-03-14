@@ -7,3 +7,4 @@ $run_dev.*
 ^README\.Rmd$
 ^CODE_OF_CONDUCT\.md$
 ^SampleData$
+^Scripts$

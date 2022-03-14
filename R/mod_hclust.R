@@ -1,10 +1,15 @@
 #' Hierarchical Clustering UI Function
-#' 
 #'
-#' @description A shiny Module.
+#' @description A shiny Module for running a Hierarchical clustering using the \code{cluster::agnes}.      
+#' The module comes with a UI where the user can adjust the parameters 
+#' of the clustering, such as Number of Clusters, the seed for the random number generator
+#' and others..
 #'
 #' @param id,input,output,session Internal parameters for {shiny}.
 #'
+#' @return The \code{cluster::agnes} object along with the a. clustering vector
+#' and b. the silhouette table
+#' 
 #' @noRd 
 #'
 #' @importFrom shiny NS tagList 
@@ -33,15 +38,8 @@ mod_hclust_ui <- function(id){
                       )
           ),  class = "small-font", style = "margin-top: 15px")
         
-        
-        # col_4(
-        #   p("Hierarchical clustering needs a ", strong("linkage method.")),
-        #   p(strong("Note that"), " Linkage methods may have  strong
-        # impact on the cluster formation. See the INFO tab"),
-        #   )
       )
     )   
-    #,verbatimTextOutput(ns("clust_index"))
   )
 }
 
@@ -117,6 +115,8 @@ mod_hclust_server <- function(id, dta, vars_cluster, seed = reactive(123)){
           # add a cluster- a named vector 
           res$cluster <- stats::cutree(res, input$n_clust) %>% setNames(ids)
           
+          res$silhouette <- get_sil_widths(res, diss_matrix())
+          
           res
         },
         
@@ -130,26 +130,15 @@ mod_hclust_server <- function(id, dta, vars_cluster, seed = reactive(123)){
       
     })
     
-    # return the clustering vector and 
-    # The cluster::daisy handles the missing cases
-    # clustering_vector <- reactive({
+    # tbl_silhouette <- reactive({
     #   
-    #   temp_vec <- stats::cutree(h_clust(), input$n_clust)
-    #   get_cluster_indx(dta_cleaned(), temp_vec)
+    #   get_sil_widths(h_clust(), diss_matrix())
     #   
     # })
     
-    output$h_clust <- renderPrint({h_clust()})
     
-    output$clust_index <- renderPrint(h_clust()$cluster)
+    return( h_clust )
     
-    
-    return(
-      list(
-        res = h_clust
-      )
-      
-    )
   })
 }
 

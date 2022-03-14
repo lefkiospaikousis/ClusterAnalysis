@@ -12,60 +12,46 @@ app_server <- function( input, output, session ) {
   
   res_kmeans <- mod_kmeans_server("kmeans_ui_1", dta, vars_for_cluster, seed = reactive(input$seed))
   
-  res_kmeds <- mod_kmedoids_server("kmedoids_ui_1", dta, vars_for_cluster, seed = reactive(input$seed))
+  res_kmeds  <- mod_kmedoids_server("kmedoids_ui_1", dta, vars_for_cluster, seed = reactive(input$seed))
   
   res_hclust <- mod_hclust_server("hlust_ui_1", dta, vars_for_cluster, seed = reactive(input$seed))
   
-  output$res_cluster <- renderPrint({
-    
-    switch (input$clust_method,
-      "k-means" = res_kmeans$res(),
-      'k-meds' = res_kmeds$res(),
-      'h-clust' = res_hclust$res(),
-      validate(glue::glue("{input$clust_method} Not yet ready"))
-    )
-    
-    
-  })
   
-  output$cluster_group <- renderPrint({
+  active_clustering <- reactive({
     
     switch (input$clust_method,
-            "k-means" = res_kmeans$res()$cluster,
-            'k-meds' = res_kmeds$res()$cluster,
-            'h-clust' = res_hclust$res()$cluster,
+            "k-means" = res_kmeans(),
+            'k-meds'  = res_kmeds(),
+            'h-clust' = res_hclust(),
             validate(glue::glue("{input$clust_method} Not yet ready"))
     )
     
-    
   })
   
-  
-  
-  
+
   # Constants ---------------------------------------------------------------
   
   # Cluster Methods
   clust_methods <- c("Hierarchical", "k-Medoids (PAM)", "k-means")
   
   # HC clustering methods in cluster::agnes
-  hc_methods  <- c("Ward's method" = "ward", 
-                  "Single linkage" = "single", 
-                  "Complete linkage" = "complete", 
-                  "Average (UPGMA)" = "average",
-                  "Weighted Average linkage (WPGMA)" = "average"
-                  ) #, "mcquitty", "median", "centroid"
+  hc_methods  <- c("Ward's method"                    = "ward", 
+                   "Single linkage"                   = "single", 
+                   "Complete linkage"                 = "complete", 
+                   "Average (UPGMA)"                  = "average",
+                   "Weighted Average linkage (WPGMA)" = "average"
+  ) #, "mcquitty", "median", "centroid"
   
   hc_distance <- c("euclidean", "manhattan")
   n_clusters  <- seq(2,7)
   
   # a list of statistics for silhouette summaries
-  sil_summary = list(
-    ~mean(., na.rm = TRUE),
-    ~sd(., na.rm = TRUE),
-    ~median(., na.rm = TRUE),
-    ~min(., na.rm = TRUE),
-    ~max(., na.rm = TRUE)
+  silhouette_summary = list(
+    mean = ~mean(., na.rm = TRUE),
+    sd = ~sd(., na.rm = TRUE),
+    median = ~median(., na.rm = TRUE),
+    min = ~min(., na.rm = TRUE),
+    max = ~max(., na.rm = TRUE)
   )
   
   # Cluster statistics the package {fpc} produces using the fpc::cluster.stats(dissMatrix, cluster_membership)
@@ -94,7 +80,7 @@ app_server <- function( input, output, session ) {
     
     if(!isTruthy(input$file)) {
       
-      penguins  # Sample file
+      penguins  # Sample file/ or penguins_raw
       
     } else {
       
@@ -132,6 +118,7 @@ app_server <- function( input, output, session ) {
     get_var_labels(dta(), unlist = FALSE)
   })
   
+  
   output$dta <- reactable::renderReactable({
     
     dta() %>% 
@@ -152,5 +139,13 @@ app_server <- function( input, output, session ) {
   })
   
   
+  
+  output$res_cluster <- renderPrint({ active_clustering() })
+  
+  output$cluster_group <- renderPrint({ active_clustering()$cluster })
+  
+  tbl_silhouette <- reactive({ active_clustering()$silhouette })
+  
+  output$tbl_silhouette <- DT::renderDT({ tbl_silhouette() })
   
 }

@@ -1,15 +1,14 @@
 #' Partitioning Around Medoids (kmeds) UI Function
-#' 
 #'
-#' @description A shiny Module for running a k-medoids clustering.   
+#' @description A shiny Module for running a k-medoids clustering using the \code{cluster::pam}.       
 #' The module comes with a UI where the user can adjust the parameters 
 #' of the clustering, such as Number of Clusters, the seed for the random number generator
 #' and others..
 #'
 #' @param id,input,output,session Internal parameters for {shiny}.
 #'
-#' @return A List of the a. The \code{cluster::pam} result, and b. the clustering vector
-#' which is the corrected if the dataset to be used has missing values
+#' @return The \code{cluster::pam} object along with the a. clustering vector
+#' and b. the silhouette table
 #' 
 #' @noRd 
 #'
@@ -32,7 +31,6 @@ mod_kmedoids_ui <- function(id){
           ),  class = "small-font")
       )   
     )
-    #,verbatimTextOutput(ns("clust_index"))
   )
 }
 
@@ -103,13 +101,16 @@ mod_kmedoids_server <- function(id, dta, vars_cluster, seed = reactive(123)){
         expr = {
           set.seed(seed())
           
-          cluster::pam(
+          res <- cluster::pam(
             diss_matrix(), 
             k = input$n_clust,
             keep.diss = FALSE,
             keep.data = FALSE
           )
           
+          res$silhouette <- get_sil_widths(res, diss_matrix())
+          
+          res
         },
         
         error = function(e){
@@ -122,27 +123,18 @@ mod_kmedoids_server <- function(id, dta, vars_cluster, seed = reactive(123)){
      
     })
     
-    # return the clustering vector and 
-    # The cluster::daisy handles the missing cases
-    clustering_vector <- reactive({
-      
-      #k_meds()$clustering
-      get_pam_cluster_indx(dta_cleaned(), k_meds()$clustering)
-      
-    })
+    # tbl_silhouette <- reactive({
+    #   
+    #   req(k_meds(), diss_matrix())
+    #   
+    #   get_sil_widths(k_meds(), diss_matrix())
+    #   
+    # })
     
     output$k_meds <- renderPrint({k_meds()})
     
-    output$clust_index <- renderPrint(clustering_vector())
     
-    
-    return(
-      list(
-        res = k_meds
-        #clust_index = clustering_vector
-      )
-      
-    )
+    return( k_meds )
     
   })
 }

@@ -1,13 +1,12 @@
 #' K-Means Clustering UI Function
-#' 
 #'
 #' @description A shiny Module for running a k-means clustering.   
 #' The module comes with a UI where the user can adjust the parameters 
 #' of the clustering, such as Number of Clusters, the seed for the random number generator
 #' and others..
 #' 
-#' @return A List of the a. The \code{kmeans} result, and b. the clustering vector
-#' which is the corrected if the dataset to be used has missing values
+#' @return The \code{kmeans} object along with the a. clustering vector
+#' and b. the silhouette table
 #'
 #' @param id,input,output,session Internal parameters for {shiny}.
 #'
@@ -33,7 +32,6 @@ mod_kmeans_ui <- function(id){
             numericInput(ns("n_start"), "Random sets of cluster centers", value = 10),  class = "small-font")
         ) 
         
-        #,verbatimTextOutput(ns("clust_index"))
         #, style = "border-style: solid; border-color: coral"
         )
       
@@ -84,6 +82,17 @@ mod_kmeans_server <- function(id, dta, vars_cluster, seed = reactive(123)){
       
     })
     
+    # I do it only for the silhouetee 
+    diss_matrix <- reactive({
+      
+      req(dta_cleaned())
+      
+      calc_diss_matrix(
+        dta = dta_cleaned() %>% na.omit(), metric = "euclidean"
+      ) 
+      
+    })
+    
     
     k_means <- reactive({
       
@@ -93,11 +102,15 @@ mod_kmeans_server <- function(id, dta, vars_cluster, seed = reactive(123)){
         expr = {
           set.seed(seed())
           
-          kmeans(
+          res <- kmeans(
             dta_cleaned() %>% na.omit(),
             centers = input$n_clust,
             nstart  = input$n_start
           )
+          
+          res$silhouette <- get_sil_widths(res, diss_matrix())
+          
+          res
         },
         
         error = function(e){
@@ -110,14 +123,6 @@ mod_kmeans_server <- function(id, dta, vars_cluster, seed = reactive(123)){
       
     })
     
-    # # return the clustering vector and 
-    # # control the NA's also
-    # clustering_vector <- reactive({
-    #   
-    #   get_cluster_indx(dta_cleaned(), k_means()$cluster)
-    #   
-    # })
-    
     output$k_means <- renderPrint({
       
       k_means()
@@ -128,10 +133,11 @@ mod_kmeans_server <- function(id, dta, vars_cluster, seed = reactive(123)){
     
     
     return(
-      list(
-        res = k_means
-        # clust_index = clustering_vector
-      )
+      k_means
+      # list(
+      #   res = k_means,
+      #   silhouette = tbl_silhouette
+      # )
       
     )
     

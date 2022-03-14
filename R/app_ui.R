@@ -10,8 +10,7 @@ app_ui <- function(request) {
     golem_add_external_resources(),
     # Your application UI logic 
     fluidPage(
-      #h1("Cluster-ShinyApp"),
-      #theme = shinythemes::shinytheme("paper"),
+      #theme = bslib::bs_theme(bootswatch = "minty"),
       
       titlePanel("Cluster Analysis"),
       
@@ -55,7 +54,7 @@ app_ui <- function(request) {
         mainPanel(
           
           tabsetPanel(
-            
+            selected = "Cluster",
             tabPanel("Data",
                      br(),
                      p("The Data"),
@@ -87,7 +86,10 @@ app_ui <- function(request) {
                          numericInput("seed", "Set seed", value = 123, 1, 1000, 1)
                        )
                      ),
-                     #verbatimTextOutput("cluster_group"),
+                     
+                     textOutput("active"),
+                     verbatimTextOutput("cluster_group"),
+                     DT::DTOutput("tbl_silhouette"),
                      fluidRow(
                        conditionalPanel(
                          condition = "input.clust_method == 'k-means'",
