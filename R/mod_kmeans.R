@@ -27,7 +27,7 @@ mod_kmeans_ui <- function(id){
           col_4(
             numericInput(ns("n_clust"), "Number of clusters", value = 3),  class = "small-font", style = "margin-top: 15px"),
           col_4(
-            numericInput(ns("iter.max"), "Maximum number of iterations allowed", value = 1),  class = "small-font"),
+            numericInput(ns("iter.max"), "Maximum number of iterations", value = 1),  class = "small-font"),
           col_4(
             numericInput(ns("n_start"), "Random sets of cluster centers", value = 10),  class = "small-font")
         ) 

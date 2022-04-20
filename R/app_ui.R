@@ -18,7 +18,7 @@ app_ui <- function(request) {
         sidebarPanel(
           h3("How to use this app"),
           p("1. First upload a dataset"),
-          p("Please note that the app currently accepts only .csv and .tsv files"),
+          p("Currently accepted data formats: .csv, .tsv, .sav(SPSS), .xlsx, .xls (Excel) files"),
           #br(),
           fileInput("file", NULL, accept = c(".csv", ".tsv")),
           p("2. Go to ", em("Clustering"),
@@ -31,21 +31,18 @@ app_ui <- function(request) {
           hr(),
           h4("A few words on the app"),
           p("The app is using the R packages: ",code("cluster"), "for clustering, the",
-            code("fpc"), "for internal validation statistics, and of course 
-                   uses the ", code("tidyverse"), "collection of packages
-                   for data wrangling", "The graphs are produced with the ", code("ggplot2"),
-            "package.", "I also try to improve the UI using the ", code("shinyWidgets"),
-            "package. (not there yet... :). Lastly, I managed to incorporate some",
-            a(href = "https://shiny.rstudio.com/articles/modules.html", "shiny modules"), 
-            "functionality (not much yet, just the download buttons) to manage the code complexity"),
+            code("fpc"), "for internal validation statistics, and the ", code("tidyverse"), 
+            "collection of packages for data wrangling", "The graphs are produced with the ", code("ggplot2"),
+            "package.", "The app is (almost) ",
+            a(href = "https://shiny.rstudio.com/articles/modules.html", "fully modularised")
+          ),
           hr(),
           p("This app is created by", a(href = "https://www.linkedin.com/in/lefkios",
                                         "Lefkios Paikousis."), 
             br(),
             "The code for the app can be found in my", 
-            a(href="https://github.com/lefkiospaikousis/clusterShinyApp", "Github page"),
-            br(), "You can also find me on ", a(href = "https://twitter.com/lefkiospaik", 
-                                                "twitter")),
+            a(href="https://github.com/lefkiospaikousis/ClusterAnalysis", "Github page"),
+            br(), "You can also find me on ", a(href = "https://twitter.com/lefkiospaik","twitter")),
           p("As this is a work in progres, please send me your comments 
                    and suggestions on how to improve this app. Thanks for visiting"),
           width = 3,
@@ -86,10 +83,10 @@ app_ui <- function(request) {
                          numericInput("seed", "Set seed", value = 123, 1, 1000, 1)
                        )
                      ),
-                     
-                     textOutput("active"),
-                     verbatimTextOutput("cluster_group"),
+                     #textOutput("active"),
+                     #verbatimTextOutput("cluster_group"),
                      DT::DTOutput("tbl_silhouette"),
+                     tableOutput("dta_updated"),
                      fluidRow(
                        conditionalPanel(
                          condition = "input.clust_method == 'k-means'",
@@ -101,6 +98,8 @@ app_ui <- function(request) {
                        ),
                        conditionalPanel(
                          condition = "input.clust_method == 'h-clust'",
+                         waiter::autoWaiter(id = "hc_plot", html = tagList(waiter::spin_2(), "Loading...")),
+                         fluidRow(col_2(actionButton("show_dendro", "Show Dendrogram"))),
                          mod_hclust_ui("hlust_ui_1")
                        )
                      ),

@@ -70,19 +70,38 @@ mod_hclust_server <- function(id, dta, vars_cluster, seed = reactive(123)){
     })
     
     
+    observeEvent(dta_cleaned(), {
+      
+      all_vars_numeric <- all(purrr::map_lgl(dta_cleaned(), ~inherits(., "numeric")))
+      
+      shinyFeedback::feedback("metric", show = !all_vars_numeric,
+                              text = "At least one of your variables is non numeric. 
+                                      Gower's distance is used", color = "#068bf8",
+                              icon = icon("info-sign", lib = "glyphicon")
+      )
+      
+      if(isFALSE(all_vars_numeric) & input$metric != "gower"){
+        
+        updateSelectInput(inputId = "metric", selected = "gower")
+        
+      } 
+      
+      
+    })
+    
     diss_matrix <- reactive({
       
       req(dta_cleaned())
       
-      all_vars_numeric <- all(purrr::map_lgl(dta_cleaned(), ~inherits(., "numeric")))
-      
-      
-      shinyFeedback::feedback("metric", show = !all_vars_numeric,
-                              text = "At least one of your variables is non numeric. 
-                              Gower's distance will be used",
-                              color = "#068bf8",
-                              icon = icon("info-sign", lib = "glyphicon") 
-      )
+      # all_vars_numeric <- all(purrr::map_lgl(dta_cleaned(), ~inherits(., "numeric")))
+      # 
+      # 
+      # shinyFeedback::feedback("metric", show = !all_vars_numeric,
+      #                         text = "At least one of your variables is non numeric. 
+      #                         Gower's distance will be used",
+      #                         color = "#068bf8",
+      #                         icon = icon("info-sign", lib = "glyphicon") 
+      # )
       
       calc_diss_matrix(
         dta = dta_cleaned() %>% na.omit(),
@@ -129,13 +148,6 @@ mod_hclust_server <- function(id, dta, vars_cluster, seed = reactive(123)){
       )
       
     })
-    
-    # tbl_silhouette <- reactive({
-    #   
-    #   get_sil_widths(h_clust(), diss_matrix())
-    #   
-    # })
-    
     
     return( h_clust )
     

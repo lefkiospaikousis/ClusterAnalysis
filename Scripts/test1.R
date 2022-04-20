@@ -10,13 +10,21 @@ vars_for_cluster <- c("bill_length_mm", "bill_depth_mm", "flipper_length_mm")
 
 dta <- 
   temp %>% 
-  select(all_of(vars_for_cluster)) %>% 
-  mutate_if(is.numeric, ~ scale2(., na.rm = TRUE)) %>% 
+  slice_sample(n = 30) %>%
+  # add a row with missing values
+  add_row(species = "Adelie") %>%
+  arrange(species) %>% 
+  tibble::rowid_to_column("id") %>% 
   as.data.frame()
 #purrr::keep(is.numeric) %>% 
 #na.omit()
 
-dta_clust <- dta %>% as.data.frame() %>% na.omit()
+dta_clust <- 
+  dta %>% 
+  select(all_of(vars_for_cluster)) %>% 
+  mutate_if(is.numeric, ~ scale2(., na.rm = TRUE)) %>% 
+  as.data.frame() %>% 
+  na.omit()
 
 
 # dissimilarity ----
@@ -63,6 +71,26 @@ res_kmeans$silhouette <- get_sil_widths(res_kmeans, diss_matrix)
 
 get_sil_widths(res_agnes, diss_matrix)
 
+tbl_sil <- res_kmeans$silhouette
+
+dta %>% 
+  left_join(tbl_sil, by = "id", suffix = c("_varOfDF", "")) 
+
+
+dta %>% 
+  add_silhouette_to_dta(tbl_sil)
+
+# Aggregated Tbl silhouette
+
+# a list of statistics for silhouette summaries
+silhouette_summary = list(
+  mean = ~mean(., na.rm = TRUE),
+  sd = ~sd(., na.rm = TRUE),
+  median = ~median(., na.rm = TRUE),
+  min = ~min(., na.rm = TRUE),
+  max = ~max(., na.rm = TRUE)
+)
+
 res_sil <- get_sil_widths(res_pam, diss_matrix)
 
 by_group <- 
@@ -88,42 +116,36 @@ res_pam$clustering %>%
   bind_rows(overall)
 
 
-class(diss_matrix)
 
-res_sil<- cluster::silhouette(res_kmeans$cluster, diss_matrix) 
+# Dendrogram
 
+library(dendextend)
 
-dta %>% 
-  as_tibble()
+dendro <- as.dendrogram(res_agnes)
 
-indx <- res_kmeans$cluster %>% names() %>% as.numeric()
+plot(dendro)
 
-indx
+summary(dendro)
 
+labels(dendro)
 
+ord <- res_agnes$order
+lab <- res_agnes$order.lab %>% as.numeric()
+dta[ord,]
+dta[lab,]
 
-tibble(
-  cluster = res_sil[,1],
-  neighbor = res_sil[,2],
-  sil_width = res_sil[,3]
-) %>% 
-  tibble::add_column(id = indx, .before = 1) %>% 
-  tidyr::complete(id = seq_len(nrow(dta)))
+new_labels <- dta$species[as.numeric(res_agnes$order.lab)]
 
-
-res_sil %>% as.data.frame()
-
-str(res_sil)
-
-summary(res_sil)
-
-
-
-ggplot()+
-  xlab("No data available")+
-  theme(panel.background = element_blank(),
-        axis.title.x=element_text(size=20, colour ='#555555'))
-
+  
+dendro %>% 
+  # set("leaves_pch", c(19, 19, NA)) %>%
+  # set("leaves_cex", c(1, 2)) %>%
+  set("labels_colors", value = c("skyblue", "orange", "grey"), k=3) %>% 
+  set("branches_k_color", value = c("skyblue", "orange", "grey"), k = 3) %>%
+  set("leaves_pch", 19)  %>% 
+  set("nodes_cex", 0.7) %>% 
+  set("labels", new_labels) %>% 
+  plot(horiz=TRUE, axes=FALSE)
 
 
 

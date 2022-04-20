@@ -238,3 +238,49 @@ get_sil_widths <- function(obj, diss_matrix){
 }
 
 
+#' Title
+#'
+#' @param dta 
+#' @param cluster_group 
+#'
+#' @return
+#' @export
+add_cluster_to_dta <- function(dta, cluster_group){
+  
+  stopifnot(all(dim(dta) > 0))
+  stopifnot(is.numeric(cluster_group))
+  stopifnot(length(cluster_group) <= nrow((dta)))
+  
+}
+
+
+#' Add silhouette information on the the dataset
+#'
+#' It adds not only the `sil_width` but also the cluster membership
+#' and the neighbor cluster
+#' @param dta The original data
+#'
+#' @param tbl_silhouette A dataframe. Output of the \code{get_sil_widths}
+#' 
+#' @return
+#' @export
+add_silhouette_to_dta <- function(dta, tbl_silhouette){
+  
+  
+  stopifnot(is.data.frame(tbl_silhouette))
+  stopifnot(all(dim(dta) > 0))
+  stopifnot(all(dim(tbl_silhouette) > 0))
+  stopifnot(!is.null(tbl_silhouette$sil_width))
+  stopifnot(nrow(tbl_silhouette) <= nrow(dta))
+  
+  # in case there are similar column names in the data
+  
+  dta %>% 
+    left_join(
+      tbl_silhouette, by = "id", suffix = c("_varOfDF", "")
+      ) 
+  
+}
+
+
+
