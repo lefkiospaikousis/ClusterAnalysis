@@ -28,7 +28,7 @@ app_server <- function( input, output, session ) {
     
   })
   
-
+  
   # Constants ---------------------------------------------------------------
   
   # Cluster Methods
@@ -82,7 +82,8 @@ app_server <- function( input, output, session ) {
       
       penguins %>% # Sample file/ or penguins_raw
         slice_sample(n = 60) %>% 
-        tibble::rowid_to_column("id")  
+        #tibble::rowid_to_column(".rowid")  %>% 
+        {.}
       
     } else {
       
@@ -90,7 +91,8 @@ app_server <- function( input, output, session ) {
       dta_upld <- read_file(input$file$datapath)
       
       dta_upld %>% 
-        tibble::rowid_to_column("id")
+        #tibble::rowid_to_column(".rowid") %>% 
+        {.}
     }
     
     
@@ -132,7 +134,11 @@ app_server <- function( input, output, session ) {
     
   })
   
-  
+  output$dta_labels <- renderPrint({
+    
+    labels_list() %>% unlist()
+    
+  })
   
   output$res_cluster <- renderPrint({ active_clustering() })
   
@@ -151,15 +157,16 @@ app_server <- function( input, output, session ) {
     
     req(active_clustering())
     tryCatch(
-
+      
       expr = {
-
+        
         dta() %>% 
-          add_silhouette_to_dta(active_clustering()$silhouette)
+          tibble::rowid_to_column(".rowid") %>% 
+          add_silhouette(active_clustering()$silhouette)
         
       },
       error = function(e){
-
+        
         print(paste("Error at :",Sys.time(), e))
         showModal(modalDialog("Something went terribly wrong"))
       }
@@ -180,20 +187,20 @@ app_server <- function( input, output, session ) {
     req(input$clust_method == "h-clust")
     
     
-    #browser()
+    
     dendro <- stats::as.dendrogram(res_hclust())
     
     #if(!is.null(input$id_var)){
-      
+    
     dendextend::set(dendro, "labels", dta()$species[res_hclust()$order]) 
-      
+    
     #}
     
     n_clust <- res_hclust()$cluster %>% unique() %>% length()
     
     set.seed(input$seed)
     colrs <- colours()[sample(600, n_clust)]
-      
+    
     # c("skyblue", "orange", "grey", "olivedrab", "moccasin", "bisque4")
     
     # $order.lab is the actual ids of the participant cases
@@ -240,7 +247,7 @@ app_server <- function( input, output, session ) {
   })
   
   observeEvent(input$show_dendro, {
-    #browser()
+    
     showModal(myModal())
   })
   
@@ -255,7 +262,7 @@ app_server <- function( input, output, session ) {
       
       , easyClose = TRUE
     )
- 
+    
   }
   
 }

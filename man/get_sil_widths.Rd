@@ -12,7 +12,7 @@ get_sil_widths(obj, diss_matrix)
 \item{diss_matrix}{A dissimilarity matrix, of class `dist`}
 }
 \value{
-A tibble with the observation id, the cluster membership, 
+A tibble with the observation .rowid, the cluster membership, 
 the cluster neighbor and the silhouette width
 }
 \description{
@@ -23,6 +23,6 @@ This function extracts or calculates the silhouette widths from the clustering o
 For the other cluster methods we calculate them ourselves using
 cluster::silhouette    
 
-The clustering `obj` must have a named `cluster` vector. Named with the observation id
+The clustering `obj` must have a named `cluster` vector. Named with the observation .rowid
 and the value the observation cluster membership
 }

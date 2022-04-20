@@ -4,9 +4,19 @@ devtools::load_all()
 
 temp <- read_file("SampleData/sample_spss.sav")
 
-get_var_labels(temp)
+lab_list <- get_var_labels(temp)
 
 vars_for_cluster <- c("bill_length_mm", "bill_depth_mm", "flipper_length_mm")
+
+labelled::var_label(temp) <- NULL
+
+purrr::map(names(temp), function(x){
+  
+  attr(temp[[x]], "label") <<- lab_list[[x]]
+  
+})
+
+
 
 dta <- 
   temp %>% 
@@ -14,7 +24,7 @@ dta <-
   # add a row with missing values
   add_row(species = "Adelie") %>%
   arrange(species) %>% 
-  tibble::rowid_to_column("id") %>% 
+  tibble::rowid_to_column(.rowid) %>% 
   as.data.frame()
 #purrr::keep(is.numeric) %>% 
 #na.omit()
@@ -74,11 +84,11 @@ get_sil_widths(res_agnes, diss_matrix)
 tbl_sil <- res_kmeans$silhouette
 
 dta %>% 
-  left_join(tbl_sil, by = "id", suffix = c("_varOfDF", "")) 
+  left_join(tbl_sil, by = .rowid, suffix = c("_varOfDF", "")) 
 
 
 dta %>% 
-  add_silhouette_to_dta(tbl_sil)
+  add_silhouette(tbl_sil)
 
 # Aggregated Tbl silhouette
 

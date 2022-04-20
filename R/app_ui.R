@@ -57,6 +57,7 @@ app_ui <- function(request) {
                      p("The Data"),
                      hr(),
                      reactable::reactableOutput("dta"),
+                     #verbatimTextOutput("dta_labels"),
                      width = 8
             ),
             tabPanel("Cluster",
@@ -85,7 +86,7 @@ app_ui <- function(request) {
                      ),
                      #textOutput("active"),
                      #verbatimTextOutput("cluster_group"),
-                     DT::DTOutput("tbl_silhouette"),
+                     #DT::DTOutput("tbl_silhouette"),
                      tableOutput("dta_updated"),
                      fluidRow(
                        conditionalPanel(

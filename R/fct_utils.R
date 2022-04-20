@@ -7,12 +7,23 @@
 #' @noRd
 clean_sav <- function(dta){
   
-  dta %>% 
+  out <- dta %>% 
     mutate(
       across(where(haven::is.labelled), forcats::as_factor)
     ) %>% 
     # haven::zap_labels() %>% 
     {.}
+  
+  # # So far, the forcars::as_factor keeps the variable labels, so no problem with that
+  # labels_list <- get_var_labels(dta, unlist = FALSE)
+  # purrr::map(names(out), function(x){
+  #   
+  #   attr(out[[x]], "label") <<- labels_list[[x]]
+  #   
+  # })
+  
+  out
+  
 }
 
 
@@ -183,10 +194,10 @@ calc_diss_matrix <- function(dta, metric = c("euclidean", "manhattan", "gower"))
 #' For the other cluster methods we calculate them ourselves using
 #' cluster::silhouette    
 #' 
-#' The clustering `obj` must have a named `cluster` vector. Named with the observation id
+#' The clustering `obj` must have a named `cluster` vector. Named with the observation .rowid
 #' and the value the observation cluster membership  
 #' 
-#' @return A tibble with the observation id, the cluster membership, 
+#' @return A tibble with the observation .rowid, the cluster membership, 
 #' the cluster neighbor and the silhouette width
 #' 
 #' @param obj A clustering object
@@ -197,10 +208,10 @@ get_sil_widths <- function(obj, diss_matrix){
   stopifnot(inherits(diss_matrix, "dist"))
   
   if(inherits(obj, c("kmeans", "agnes"))){ # kmeans and HC clustering
-    
+   
     stopifnot(!is.null(obj[["cluster"]]))
     
-    # cluster::silhoutte does not keep the id indx of the 
+    # cluster::silhoutte does not keep the .rowid indx of the 
     # obj$cluster. I do a workaround.
     
     indx <- names(obj$cluster) %>% as.numeric()
@@ -213,7 +224,7 @@ get_sil_widths <- function(obj, diss_matrix){
         neighbor = res_sil[,2],
         sil_width = res_sil[,3]
       ) %>% 
-      tibble::add_column(id = indx, .before = 1) 
+      tibble::add_column(.rowid = indx, .before = 1) 
     
   }
   
@@ -221,12 +232,12 @@ get_sil_widths <- function(obj, diss_matrix){
     
     # cluster::pam object holds the sil widths as array
     # where the row ids are the observation ids. The important
-    # thing is that it respects the na.omit of the df and we know the true obs id
+    # thing is that it respects the na.omit of the df and we know the true obs .rowid
     out <- 
       obj$silinfo$widths %>% 
-      as_tibble(rownames = "id") %>% 
-      mutate(id = as.numeric(id)) %>% 
-      arrange(id)
+      as_tibble(rownames = ".rowid") %>% 
+      mutate(.rowid = as.numeric(.rowid)) %>% 
+      arrange(.rowid)
   }
   
   # if(inherits(obj, "agnes")){ # Hierarchical Clustering
@@ -264,7 +275,7 @@ add_cluster_to_dta <- function(dta, cluster_group){
 #' 
 #' @return
 #' @export
-add_silhouette_to_dta <- function(dta, tbl_silhouette){
+add_silhouette <- function(dta, tbl_silhouette){
   
   
   stopifnot(is.data.frame(tbl_silhouette))
@@ -277,7 +288,7 @@ add_silhouette_to_dta <- function(dta, tbl_silhouette){
   
   dta %>% 
     left_join(
-      tbl_silhouette, by = "id", suffix = c("_varOfDF", "")
+      tbl_silhouette, by = ".rowid", suffix = c("_varOfDF", "")
       ) 
   
 }
