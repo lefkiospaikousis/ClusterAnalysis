@@ -2,6 +2,7 @@ default:
   golem_name: ClusterAnalysis
   golem_version: 0.0.0.9000
   app_prod: no
+  max_upld: 30*1024^2
 production:
   app_prod: yes
 dev:
