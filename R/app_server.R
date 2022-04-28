@@ -18,6 +18,7 @@ app_server <- function( input, output, session ) {
   res_hclust <- mod_hclust_server("hlust_ui_1", dta, vars_for_cluster, seed = reactive(input$seed))
   
   
+  
   active_clustering <- reactive({
     
     switch (input$cluster_method,
@@ -95,33 +96,43 @@ app_server <- function( input, output, session ) {
   )
   
   
+  
   # Server declaration ------------------------------------------------------
   
+  dta_upld <- mod_upload_file_server("upload_file_ui_1")
   
-  dta <- reactive({
+  dta_error <- reactiveVal(FALSE)
+  file_uploaded <- reactiveVal(FALSE)
+  
+  
+  observeEvent(dta_upld(), {
     
-    if(!isTruthy(input$file)) {
+    if(inherits(dta_upld(), "error")){
       
-      penguins %>% # Sample file/ or penguins_raw
-        slice_sample(n = 60) %>% 
-        #tibble::rowid_to_column(".rowid")  %>% 
-        {.}
+      dta_error(TRUE)
       
     } else {
       
-      #TODO safe_read_file with purrr::safely or possibly
-      dta_upld <- read_file(input$file$datapath)
+      dta_error(FALSE)
+      file_uploaded(TRUE)
       
-      # I need the column name .rowid for my safe matchings
-      if(".rowid" %in% names(dta_upld)){
-        dta_upld$.rowid <- NULL
-      }
-      
-      dta_upld %>% 
-        #tibble::rowid_to_column(".rowid") %>% 
-        {.}
     }
     
+    })
+  
+  dta <- reactive({
+    
+    if(isTRUE(file_uploaded())){
+      # keep the previously uploaded file, in case the no success with the new
+      req(isFALSE(dta_error()), cancelOutput = TRUE)
+      dta_upld()
+      
+    } else {
+      # Sample file/ or penguins_raw
+      penguins %>% 
+        slice_sample(n = 60) %>% 
+        {.}
+    }
     
   })
   
@@ -134,20 +145,16 @@ app_server <- function( input, output, session ) {
   
   observeEvent(dta(), {
     
-    shinyWidgets::updatePickerInput(session, "vars_cluster",
-                                    choices = names(dta())
+    shinyWidgets::updatePickerInput(session, "vars_cluster", choices = names(dta())
+                                    
     )
   }, priority = 10)
   
-  file_info <- reactive({
-    req(input$file)
-    input$file
-  })
-  
   
   labels_list <- reactive({
-    req(dta())
+    
     get_var_labels(dta(), unlist = FALSE)
+    
   })
   
   
@@ -195,7 +202,7 @@ app_server <- function( input, output, session ) {
       error = function(e){
         
         print(paste("Error at :",Sys.time(), e))
-        showModal(modalDialog("Something went terribly wrong"))
+        showModal(modalDialog("Something went terribly wrong, refresh and try again"))
       }
     )
     
@@ -264,7 +271,7 @@ app_server <- function( input, output, session ) {
   
   output$info_sil <- renderUI(with_tooltip("The silhouete", info$silhouette, 
                                            interactive = TRUE
-                                           ))
+  ))
   
   cluster_stats <- reactive({
     

@@ -18,9 +18,8 @@ app_ui <- function(request) {
         sidebarPanel(
           h3("How to use this app"),
           p("1. First upload a dataset"),
-          p("Currently accepted data formats: .csv, .tsv, .sav(SPSS), .xlsx, .xls (Excel) files"),
           #br(),
-          fileInput("file", NULL, accept = c(".csv", ".tsv")),
+          mod_upload_file_ui("upload_file_ui_1"),
           p("2. Go to ", em("Clustering"),
             " tab and select variables to do the clustering. There, you will
                    also get descriptives of ", em("Internal validation"), "statistics.",

@@ -27,47 +27,6 @@ clean_sav <- function(dta){
 }
 
 
-#' Read the uploaded file
-#' 
-#' This function safely reads the uploaded file.  
-#' 
-#' The \code{read_file} function currently reads \code{Excel}, 
-#' \code{csv}, \code{tsv}, and \code{SPSS} files. If none of the above file type, 
-#' then a \code{shiny::validate} message is propagated throughout
-#' 
-#' @param path String length 1. The path of the dataset
-#' @export
-#' @return A tibble of the dataset
-read_file <- function(path) {
-  
-  stopifnot(length(path) == 1)
-  
-  type <- tools::file_ext(path)
-  
-  dta <- switch(type,
-                
-                csv = vroom::vroom(path, delim = ","), 
-                
-                tsv = vroom::vroom(path, delim = "\t") ,
-                
-                sav = haven::read_sav(path) %>% clean_sav(),
-                
-                xlsx = readxl::read_xlsx(path),
-                xls  = readxl::read_xls(path),        
-                
-                validate(
-                  
-                  "Invalid file! 
-             Please upload a file with the following extensions 
-             .csv, .tsv, .sav, .xlsx, .xls"
-                  
-                )
-  )
-  
-  dta
-  
-}
-
 #' Adapted from 
 #' https://github.com/larmarange/labelled/blob/main/R/var_label.R
 
