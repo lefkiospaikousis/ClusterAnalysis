@@ -63,7 +63,7 @@ app_ui <- function(request) {
             tabPanel("Cluster",
                      fluidRow(
                        col_3(
-                         selectInput("clust_method", "Cluster Method", 
+                         selectInput("cluster_method", "Cluster Method", 
                                      choices = c("K-means" = "k-means",
                                                  "K-medoids" = "k-meds",
                                                  "Hierarchical Clustering" = "h-clust"
@@ -90,15 +90,15 @@ app_ui <- function(request) {
                      tableOutput("dta_updated"),
                      fluidRow(
                        conditionalPanel(
-                         condition = "input.clust_method == 'k-means'",
+                         condition = "input.cluster_method == 'k-means'",
                          mod_kmeans_ui("kmeans_ui_1")
                        ),
                        conditionalPanel(
-                         condition = "input.clust_method == 'k-meds'",
+                         condition = "input.cluster_method == 'k-meds'",
                          mod_kmedoids_ui("kmedoids_ui_1")
                        ),
                        conditionalPanel(
-                         condition = "input.clust_method == 'h-clust'",
+                         condition = "input.cluster_method == 'h-clust'",
                          waiter::autoWaiter(id = "hc_plot", html = tagList(waiter::spin_2(), "Loading...")),
                          fluidRow(col_2(actionButton("show_dendro", "Show Dendrogram"))),
                          mod_hclust_ui("hlust_ui_1")
@@ -108,6 +108,19 @@ app_ui <- function(request) {
                        verbatimTextOutput("res_cluster")
                      )
                      
+            ),
+            tabPanel("Internal Validation",
+                     fluidRow(
+                       col_8(
+                         #tippy::tippyOutput("info_sil"),
+                         uiOutput("info_sil"),
+                         reactableOutput("by_cluster_silhouette"),
+                         #with_tooltip("What is this?", info$silhouette),
+                         #p(info$silhouette),
+                         reactableOutput("tbl_cluster_stats"),
+                         plotOutput("plot_sep_matrix")
+                       )
+                     )
             )
           )
           

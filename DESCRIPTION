@@ -23,6 +23,7 @@ Imports:
     shiny (>= 1.6.0),
     shinyjs,
     shinyWidgets,
+    tippy,
     waiter
 Encoding: UTF-8
 LazyData: true

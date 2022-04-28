@@ -36,6 +36,7 @@ clean_sav <- function(dta){
 #' then a \code{shiny::validate} message is propagated throughout
 #' 
 #' @param path String length 1. The path of the dataset
+#' @export
 #' @return A tibble of the dataset
 read_file <- function(path) {
   
@@ -293,5 +294,44 @@ add_silhouette <- function(dta, tbl_silhouette){
   
 }
 
+
+with_tooltip <- function(value, tooltip, ...) {
+  # tags$abbr(style = "text-decoration: underline; text-decoration-style: dotted; cursor: help",
+  #           title = tooltip, value)
+  div(style = "text-decoration: underline; cursor: help",
+      tippy::tippy(value, tooltip, ..., elementId = NULL)
+      )
+}
+
+
+
+#' Extract the panel dimensions in a faceted ggplot
+#' 
+#' This function extracts the number if rows and columns of the panel
+#' in a faceted ggplot. It can be used to calculate the \code{width} and \code{height}
+#' of a \code{shiny::renderPlot()}
+#' 
+#' Some details here :)
+#' 
+#' @param p A ggplot2 object
+#' @return A named list of the number of $rows and $cols
+#' @export
+#' @examples 
+#' p1 <- ggplot(mtcars, aes(mpg, wt)) + facet_wrap(~ gear )
+#' facet_panel_dimensions(p1)
+#' p2 <- ggplot(mtcars, aes(mpg, wt)) + facet_grid(cyl ~ gear )
+#' facet_panel_dimensions(p2)
+facet_panel_dimensions <- function(p){
+  
+  stopifnot(inherits(p, "ggplot"))
+  
+  layout <- ggplot2::ggplot_build(p)$layout$layout
+  
+  list(
+    rows = length(unique(layout$ROW)),
+    cols = length(unique(layout$COL))
+  )
+  
+}
 
 

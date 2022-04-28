@@ -4,6 +4,7 @@
 #'     DO NOT REMOVE.
 #' @import shiny
 #' @import dplyr
+#' @importFrom reactable reactable renderReactable reactableOutput colDef colFormat
 #' @noRd
 app_server <- function( input, output, session ) {
   
@@ -19,11 +20,11 @@ app_server <- function( input, output, session ) {
   
   active_clustering <- reactive({
     
-    switch (input$clust_method,
+    switch (input$cluster_method,
             "k-means" = res_kmeans(),
             'k-meds'  = res_kmeds(),
             'h-clust' = res_hclust(),
-            validate(glue::glue("{input$clust_method} Not yet ready"))
+            validate(glue::glue("{input$cluster_method} Not yet ready"))
     )
     
   })
@@ -32,7 +33,7 @@ app_server <- function( input, output, session ) {
   # Constants ---------------------------------------------------------------
   
   # Cluster Methods
-  clust_methods <- c("Hierarchical", "k-Medoids (PAM)", "k-means")
+  cluster_methods <- c("Hierarchical", "k-Medoids (PAM)", "k-means")
   
   # HC clustering methods in cluster::agnes
   hc_methods  <- c("Ward's method"                    = "ward", 
@@ -47,29 +48,50 @@ app_server <- function( input, output, session ) {
   
   # a list of statistics for silhouette summaries
   silhouette_summary = list(
-    mean   = ~mean(., na.rm = TRUE),
-    sd     = ~sd(., na.rm = TRUE),
-    median = ~median(., na.rm = TRUE),
-    min    = ~min(., na.rm = TRUE),
-    max    = ~max(., na.rm = TRUE)
+    
+    Size   = ~n(),
+    Mean   = ~mean(., na.rm = TRUE),
+    SD     = ~sd(., na.rm = TRUE),
+    Median = ~median(., na.rm = TRUE),
+    Min    = ~min(., na.rm = TRUE),
+    Max    = ~max(., na.rm = TRUE)
+    
   )
   
   # Cluster statistics the package {fpc} produces using the fpc::cluster.stats(dissMatrix, cluster_membership)
-  stats_per_clust <- c("average.distance" = "within cluster average distances"
-                       , "median.distance" = "within cluster distance medians"
-                       , "separation" = "minimum distances of a point in the cluster to a point of another cluster"
-                       , "average.toother" = "average distances of a point in the cluster to the points of other clusters"
-                       , "clus.avg.silwidths" = "average silhouette widths"
-                       #,"cluster.size" = "cluster size"
+  vec_cluster_stats <- c(
+    
+    "average.distance"     = "Within cluster average distance"
+    , "median.distance"    = "Within cluster median distance"
+    , "separation"         = "Minimum distance of a point in the cluster to a point of another cluster"
+    , "average.toother"    = "Average distance of a point in the cluster to the points of other clusters"
+    , "clus.avg.silwidths" = "Average silhouette width"
+    #,"cluster.size" = "cluster size"
   )
   
-  stats_overall <- c("average.between" = "average distance between clusters"
-                     , "average.within" = "average distance within clusters"
-                     , "avg.silwidth" = "average silhouette width"
-                     , "sindex" = "adjusted separation index"
-                     # for sindex see the documentation. less sensitive to a single or a few ambiguous points for 
-                     #,"within.cluster.ss" = "a generalisation of the within clusters sum of squares"
-                     ,"ch"
+  # statistics for overall cluster solution
+  vec_stats_overall <- c(
+    
+    "average.between"    = "Average distance between clusters"
+    , "average.within"   = "Average distance within clusters"
+    , "avg.silwidth"     = "Average silhouette width"
+    , "sindex"           = "Adjusted separation index"
+    # for sindex see the documentation. less sensitive to a single or a few ambiguous points for 
+    ,"within.cluster.ss" = "A generalisation of the within clusters sum of squares"
+    ,"ch"
+  )
+  
+  info <- list(
+    
+    silhouette = "The silhouette value is a measure of how similar an object is 
+    to its own cluster (cohesion) compared to other clusters (separation). 
+    The silhouette ranges from −1 to +1, where a high value indicates that the 
+    object is well matched to its own cluster and poorly matched to neighboring 
+    clusters. If most objects have a high value, then the clustering configuration 
+    is appropriate. If many points have a low or negative value, then the 
+    clustering configuration may have too many or too few clusters."
+    
+    
   )
   
   
@@ -89,6 +111,11 @@ app_server <- function( input, output, session ) {
       
       #TODO safe_read_file with purrr::safely or possibly
       dta_upld <- read_file(input$file$datapath)
+      
+      # I need the column name .rowid for my safe matchings
+      if(".rowid" %in% names(dta_upld)){
+        dta_upld$.rowid <- NULL
+      }
       
       dta_upld %>% 
         #tibble::rowid_to_column(".rowid") %>% 
@@ -181,10 +208,146 @@ app_server <- function( input, output, session ) {
   )
   
   
+  # Cluster Statistics ------------------------------------------------------
+  
+  
+  by_cluster_silhouette <- reactive({
+    
+    req(tbl_silhouette())
+    
+    by_group <- 
+      tbl_silhouette() %>% 
+      group_by(cluster = as.character(cluster)) %>% 
+      summarise(
+        across(sil_width, silhouette_summary, .names = "{.fn}")
+      ) %>% 
+      ungroup() %>% 
+      mutate(Proportion = Size/sum(Size), .after = Size)
+    
+    overall <- 
+      tbl_silhouette() %>% 
+      summarise(
+        across(sil_width, silhouette_summary, .names = "{.fn}")
+      ) %>% 
+      mutate(cluster = "ALL", Proportion = 1)
+    
+    
+    bind_rows(by_group, overall) 
+    
+    
+  })
+  
+  
+  # output$by_cluster_silhouette <- renderTable({
+  #   
+  #   by_cluster_silhouette() %>% 
+  #     mutate(Proportion = scales::percent(Proportion, accuracy = 0.1))
+  # }, hover = TRUE, caption = "Silouette")
+  
+  output$by_cluster_silhouette <- renderReactable({
+    
+    dta <- by_cluster_silhouette()
+    
+    dta %>% 
+      mutate(across(where(is.numeric) & !c(Proportion), round, 2)) %>% 
+      reactable(
+        rowStyle = function(index) {
+          if (index == nrow(dta)) list(fontWeight = "bold",  borderTopStyle = "groove")
+        },
+        highlight = TRUE, sortable = FALSE, compact = TRUE, fullWidth = FALSE,
+        columns = list(
+          Proportion = colDef(format = colFormat(percent = TRUE, digits = 1))
+        )
+      )
+  })
+  
+  
+  output$info_sil <- renderUI(with_tooltip("The silhouete", info$silhouette, 
+                                           interactive = TRUE
+                                           ))
+  
+  cluster_stats <- reactive({
+    
+    req(active_clustering())
+    
+    fpc::cluster.stats(
+      d = active_clustering()$diss_matrix, 
+      clustering = active_clustering()$cluster)
+  })
+  
+  tbl_cluster_stats <- reactive({
+    
+    cluster_stats()[names(vec_cluster_stats)] %>%
+      as_tibble() %>% 
+      tibble::rowid_to_column("cluster") %>% 
+      mutate(cluster = as.character(cluster))
+    
+  })
+  
+  output$tbl_cluster_stats <- reactable::renderReactable({
+    
+    tbl_cluster_stats() %>% 
+      mutate(
+        across(where(is.numeric), round, 2)
+      ) %>% 
+      reactable(
+        highlight = TRUE, sortable = FALSE,
+        columns = list(
+          #cluster = colDef(),
+          average.distance = colDef(header = with_tooltip("Average distance", vec_cluster_stats[["average.distance"]])),
+          median.distance = colDef(header = with_tooltip("Median distance", vec_cluster_stats[["median.distance"]])),
+          separation = colDef(header = with_tooltip("Separation", vec_cluster_stats[["separation"]])),
+          average.toother = colDef(header = with_tooltip("Average toother", vec_cluster_stats[["average.toother"]])),
+          clus.avg.silwidths = colDef(header = with_tooltip("Silhouette widths", vec_cluster_stats[["clus.avg.silwidths"]]))
+        )
+      )
+    
+  })
+  
+  
+  tbl_sep_matrix <- reactive({
+    
+    sep_matrix <- cluster_stats()$separation.matrix
+    n <- cluster_stats()$cluster.number
+    
+    colnames(sep_matrix) <- paste0("Cluster ", seq_len(n))
+    row.names(sep_matrix) <- paste0("Cluster ", seq_len(n))
+    
+    #sep_matrix[lower.tri(sep_matrix, diag = TRUE)] <- NA
+    as_tibble(sep_matrix, rownames = "Cluster")
+    
+  })
+  
+  output$tbl_sep_matrix <- renderTable({
+    tbl_sep_matrix()
+  }
+  , hover = TRUE, caption = "Cluster Separation Index")
+  
+  plot_sep_matrix <- reactive({
+    
+    tbl_sep_matrix() %>%
+      tidyr::gather(key, value, -Cluster) %>%
+      arrange(Cluster, key) %>%
+      ggplot2::ggplot(ggplot2::aes(Cluster, key))+
+      ggplot2::geom_tile(ggplot2::aes(fill = value))+
+      ggplot2::scale_fill_gradient2(high = "#018571", low = "#d7191c")+
+      ggplot2::geom_text(ggplot2::aes(label = round(value, 2)))+
+      ggplot2::labs(x = "", y= "", fill = "Separation\nlevel",
+                    title = "Separation between clusters",
+                    subtitle = "Higher value ~ higher separation between the pair of clusters")+
+      ggplot2::theme_light(14)
+    
+  })
+  
+  output$plot_sep_matrix <- renderPlot({plot_sep_matrix()})
+  
+  # Dendrogram --------------------------------------------------------------
+  
+  
   hc_plot <- reactive({
     
     req(res_hclust())
-    req(input$clust_method == "h-clust")
+    req(input$cluster_method == "h-clust")
     
     
     
@@ -243,7 +406,7 @@ app_server <- function( input, output, session ) {
   
   observe({
     
-    shinyjs::toggleElement(id = "show_dendro", condition = input$clust_method == "h-clust")
+    shinyjs::toggleElement(id = "show_dendro", condition = input$cluster_method == "h-clust")
   })
   
   observeEvent(input$show_dendro, {
@@ -265,4 +428,6 @@ app_server <- function( input, output, session ) {
     
   }
   
+  
+  # END of app_server ----  
 }

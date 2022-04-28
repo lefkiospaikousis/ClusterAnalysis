@@ -24,7 +24,7 @@ dta <-
   # add a row with missing values
   add_row(species = "Adelie") %>%
   arrange(species) %>% 
-  tibble::rowid_to_column(.rowid) %>% 
+  tibble::rowid_to_column(".rowid") %>% 
   as.data.frame()
 #purrr::keep(is.numeric) %>% 
 #na.omit()
@@ -84,7 +84,7 @@ get_sil_widths(res_agnes, diss_matrix)
 tbl_sil <- res_kmeans$silhouette
 
 dta %>% 
-  left_join(tbl_sil, by = .rowid, suffix = c("_varOfDF", "")) 
+  left_join(tbl_sil, by = ".rowid", suffix = c("_varOfDF", "")) 
 
 
 dta %>% 
@@ -94,6 +94,7 @@ dta %>%
 
 # a list of statistics for silhouette summaries
 silhouette_summary = list(
+  size = ~n(),
   mean = ~mean(., na.rm = TRUE),
   sd = ~sd(., na.rm = TRUE),
   median = ~median(., na.rm = TRUE),
@@ -108,15 +109,21 @@ by_group <-
   group_by(cluster = as.character(cluster)) %>% 
   summarise(
     across(sil_width, silhouette_summary, .names = "{.fn}")
-  )
+  ) %>% 
+  ungroup() %>% 
+  mutate(prop = size/sum(size), .after = size)
   
 overall <- 
   res_sil %>% 
   summarise(
     across(sil_width, silhouette_summary, .names = "{.fn}")
   ) %>% 
-  mutate(cluster = "ALL")
+  mutate(cluster = "ALL", prop = 1)
 
+
+bind_rows(by_group, overall) %>% 
+  xtable::xtable() %>% print(hline.after = c(3), type = "html")
+  flextable::flextable()
 
 res_pam$clustering %>% 
   as.character() %>% 

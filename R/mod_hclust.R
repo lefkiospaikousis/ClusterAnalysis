@@ -135,7 +135,7 @@ mod_hclust_server <- function(id, dta, vars_cluster, seed = reactive(123)){
           res$cluster <- stats::cutree(res, input$n_clust) %>% setNames(ids)
           
           res$silhouette <- get_sil_widths(res, diss_matrix())
-          
+          res$diss_matrix <- diss_matrix()
           res
         },
         

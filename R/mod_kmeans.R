@@ -109,7 +109,7 @@ mod_kmeans_server <- function(id, dta, vars_cluster, seed = reactive(123)){
           )
           
           res$silhouette <- get_sil_widths(res, diss_matrix())
-          
+          res$diss_matrix <- diss_matrix()
           res
         },
         
