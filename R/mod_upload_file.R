@@ -12,7 +12,8 @@ mod_upload_file_ui <- function(id){
   tagList(
     
     fileInput(ns("file"), 
-      label = "Currently accepted data formats:\n .csv, .tsv, .sav(SPSS), or .xlsx, .xls (Excel) files", 
+      label = HTML("Currently accepted data formats:<br>
+                   .csv, .tsv, .sav(SPSS), or .xlsx, .xls (Excel) files"), 
       accept = c(".csv", ".tsv", ".sav", ".xlsx", ".xls")),
   )
 }

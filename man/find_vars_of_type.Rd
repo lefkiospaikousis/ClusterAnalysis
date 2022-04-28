@@ -11,6 +11,7 @@
  The \code{type} argument will lead to a function - Usually \code{is.numeric} or \code{is.character}
  @param data A dataframe
  @param type The type of the variable. One of c("numeric", "character", "factor")
+ @export
  @return A character vector of variable names}
 \usage{
 find_vars_of_type(data, type = c("numeric", "character", "factor"))
@@ -25,5 +26,6 @@ Find variables within a dataset
  The \code{type} argument will lead to a function - Usually \code{is.numeric} or \code{is.character}
  @param data A dataframe
  @param type The type of the variable. One of c("numeric", "character", "factor")
+ @export
  @return A character vector of variable names
 }

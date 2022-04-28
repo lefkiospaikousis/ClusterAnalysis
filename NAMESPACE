@@ -2,6 +2,7 @@
 
 export(add_cluster_to_dta)
 export(add_silhouette)
+export(calc_diss_matrix)
 export(facet_panel_dimensions)
 export(process_file)
 export(read_file)
