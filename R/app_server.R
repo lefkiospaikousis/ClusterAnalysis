@@ -5,6 +5,7 @@
 #' @import shiny
 #' @import dplyr
 #' @importFrom reactable reactable renderReactable reactableOutput colDef colFormat
+#' @importFrom ggplot2 ggplot aes geom_density geom_vline facet_wrap scale_color_manual scale_fill_brewer
 #' @noRd
 app_server <- function( input, output, session ) {
   
@@ -118,7 +119,7 @@ app_server <- function( input, output, session ) {
       
     }
     
-    })
+  })
   
   dta <- reactive({
     
@@ -348,6 +349,35 @@ app_server <- function( input, output, session ) {
   
   output$plot_sep_matrix <- renderPlot({plot_sep_matrix()})
   
+  
+  
+  plot_density <- reactive({
+    
+    req(dta_updated())
+    dta_updated() %>% 
+      select(all_of(vars_for_cluster()), cluster) %>% 
+      density_plot()
+  })
+  
+  height_p <- reactive({
+    
+    dim <- facet_panel_dimensions(plot_density())
+    
+    switch (dim$rows,
+      "1" = 300,
+      "2" = 500,
+      "3" = 600,
+      600
+    )
+    
+  })
+  
+  output$plot_density <- renderPlot({
+    
+    plot_density()
+    
+    
+  }, height = function() height_p())
   # Dendrogram --------------------------------------------------------------
   
   

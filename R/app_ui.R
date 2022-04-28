@@ -83,6 +83,7 @@ app_ui <- function(request) {
                          numericInput("seed", "Set seed", value = 123, 1, 1000, 1)
                        )
                      ),
+                     plotOutput("plot_density"),
                      #textOutput("active"),
                      #verbatimTextOutput("cluster_group"),
                      #DT::DTOutput("tbl_silhouette"),
@@ -118,6 +119,7 @@ app_ui <- function(request) {
                          #p(info$silhouette),
                          reactableOutput("tbl_cluster_stats"),
                          plotOutput("plot_sep_matrix")
+                         
                        )
                      )
             )
