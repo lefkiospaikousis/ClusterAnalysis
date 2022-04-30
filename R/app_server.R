@@ -12,11 +12,11 @@ app_server <- function( input, output, session ) {
   
   # Modules -----------------------------------------------------------------
   
-  res_kmeans <- mod_kmeans_server("kmeans_ui_1", dta, vars_for_cluster, seed = reactive(input$seed))
+  res_kmeans <- mod_kmeans_server("kmeans_ui_1", dta, reactive(input$vars_cluster), seed = reactive(input$seed))
   
-  res_kmeds  <- mod_kmedoids_server("kmedoids_ui_1", dta, vars_for_cluster, seed = reactive(input$seed))
+  res_kmeds  <- mod_kmedoids_server("kmedoids_ui_1", dta, reactive(input$vars_cluster), seed = reactive(input$seed))
   
-  res_hclust <- mod_hclust_server("hlust_ui_1", dta, vars_for_cluster, seed = reactive(input$seed))
+  res_hclust <- mod_hclust_server("hlust_ui_1", dta, reactive(input$vars_cluster), seed = reactive(input$seed))
   
   
   
@@ -138,17 +138,14 @@ app_server <- function( input, output, session ) {
   })
   
   
-  vars_for_cluster <- reactive({
-    
-    input$vars_cluster
-    
-  })
-  
   observeEvent(dta(), {
     
-    shinyWidgets::updatePickerInput(session, "vars_cluster", choices = names(dta())
+    shinyWidgets::updatePickerInput(session, "vars_cluster", 
+                                    selected = character(0),
+                                    choices = names(dta())
                                     
     )
+    
   }, priority = 10)
   
   
@@ -354,8 +351,9 @@ app_server <- function( input, output, session ) {
   plot_density <- reactive({
     
     req(dta_updated())
+    
     dta_updated() %>% 
-      select(all_of(vars_for_cluster()), cluster) %>% 
+      select(all_of(input$vars_cluster), cluster) %>% 
       density_plot()
   })
   
