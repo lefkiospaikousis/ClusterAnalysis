@@ -68,14 +68,6 @@ app_ui <- function(request) {
                                                  "Hierarchical Clustering" = "h-clust"
                                      )
                          ),
-                         shinyWidgets::pickerInput("vars_cluster", "Select variables",
-                                                   choices = NULL, selected = NULL,
-                                                   multiple = TRUE,
-                                                   options = list(`actions-box` = TRUE,
-                                                                  `live-Search`  = TRUE,
-                                                                  liveSearchStyle = "contains"
-                                                   )
-                         )
                        )
                      ),
                      fluidRow(
@@ -83,27 +75,37 @@ app_ui <- function(request) {
                          numericInput("seed", "Set seed", value = 123, 1, 1000, 1)
                        )
                      ),
-                     plotOutput("plot_density"),
+                     textOutput("vars_cluster"),
+                     #plotOutput("plot_density"),
                      #textOutput("active"),
                      #verbatimTextOutput("cluster_group"),
                      #DT::DTOutput("tbl_silhouette"),
-                     tableOutput("dta_updated"),
+                     #tableOutput("dta_updated"),
                      fluidRow(
-                       conditionalPanel(
-                         condition = "input.cluster_method == 'k-means'",
-                         mod_kmeans_ui("kmeans_ui_1")
-                       ),
-                       conditionalPanel(
-                         condition = "input.cluster_method == 'k-meds'",
-                         mod_kmedoids_ui("kmedoids_ui_1")
-                       ),
-                       conditionalPanel(
-                         condition = "input.cluster_method == 'h-clust'",
-                         waiter::autoWaiter(id = "hc_plot", html = tagList(waiter::spin_2(), "Loading...")),
-                         fluidRow(col_2(actionButton("show_dendro", "Show Dendrogram"))),
-                         mod_hclust_ui("hlust_ui_1")
+                       tabsetPanel(
+                         id = "switcher",
+                         type = "hidden",
+                         tabPanelBody("k-means", mod_kmeans_ui("kmeans_ui_1")),
+                         tabPanelBody("k-meds", mod_kmedoids_ui("kmedoids_ui_1")),
+                         tabPanelBody("h-clust", mod_hclust_ui("hlust_ui_1"))
                        )
                      ),
+                     # fluidRow(
+                     #   conditionalPanel(
+                     #     condition = "input.cluster_method == 'k-means'",
+                     #     mod_kmeans_ui("kmeans_ui_1")
+                     #   ),
+                     #   conditionalPanel(
+                     #     condition = "input.cluster_method == 'k-meds'",
+                     #     mod_kmedoids_ui("kmedoids_ui_1")
+                     #   ),
+                     #   conditionalPanel(
+                     #     condition = "input.cluster_method == 'h-clust'",
+                     #     waiter::autoWaiter(id = "hc_plot", html = tagList(waiter::spin_2(), "Loading...")),
+                     #     fluidRow(col_2(actionButton("show_dendro", "Show Dendrogram"))),
+                     #     mod_hclust_ui("hlust_ui_1")
+                     #   )
+                     # ),
                      fluidRow(
                        verbatimTextOutput("res_cluster")
                      )

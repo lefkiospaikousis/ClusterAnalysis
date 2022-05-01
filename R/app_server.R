@@ -12,25 +12,43 @@ app_server <- function( input, output, session ) {
   
   # Modules -----------------------------------------------------------------
   
-  res_kmeans <- mod_kmeans_server("kmeans_ui_1", dta, reactive(input$vars_cluster), seed = reactive(input$seed))
+  res_kmeans <- mod_kmeans_server("kmeans_ui_1", dta, seed = reactive(input$seed))
   
-  res_kmeds  <- mod_kmedoids_server("kmedoids_ui_1", dta, reactive(input$vars_cluster), seed = reactive(input$seed))
+  res_kmeds  <- mod_kmedoids_server("kmedoids_ui_1", dta, seed = reactive(input$seed))
   
-  res_hclust <- mod_hclust_server("hlust_ui_1", dta, reactive(input$vars_cluster), seed = reactive(input$seed))
+  res_hclust <- mod_hclust_server("hlust_ui_1", dta, seed = reactive(input$seed))
   
   
+  # active_clustering <- reactive({
+  #   
+  #   updateTabsetPanel(inputId = "switcher", selected = input$cluster_method)
+  #   out <- switch (input$cluster_method,
+  #           "k-means" = mod_kmeans_server("kmeans_ui_1", dta, seed = reactive(input$seed))(),#res_kmeans(),
+  #           'k-meds'  = mod_kmedoids_server("kmedoids_ui_1", dta, seed = reactive(input$seed))(), #res_kmeds(),
+  #           'h-clust' = mod_hclust_server("hlust_ui_1", dta, seed = reactive(input$seed))(), #res_hclust(),
+  #           validate(glue::glue("{input$cluster_method} Not yet ready"))
+  #   )
+  #   
+  #   
+  #   out
+  #   
+  # }) 
   
   active_clustering <- reactive({
     
     switch (input$cluster_method,
-            "k-means" = res_kmeans(),
-            'k-meds'  = res_kmeds(),
-            'h-clust' = res_hclust(),
-            validate(glue::glue("{input$cluster_method} Not yet ready"))
+                   "k-means" = res_kmeans(),
+                   'k-meds'  = res_kmeds(),
+                   'h-clust' = res_hclust(),
+                   validate(glue::glue("{input$cluster_method} Not yet ready"))
     )
     
-  })
+  }) 
   
+  
+  observeEvent(input$cluster_method, {
+    updateTabsetPanel(inputId = "switcher", selected = input$cluster_method)
+  })
   
   # Constants ---------------------------------------------------------------
   
@@ -138,17 +156,6 @@ app_server <- function( input, output, session ) {
   })
   
   
-  observeEvent(dta(), {
-    
-    shinyWidgets::updatePickerInput(session, "vars_cluster", 
-                                    selected = character(0),
-                                    choices = names(dta())
-                                    
-    )
-    
-  }, priority = 10)
-  
-  
   labels_list <- reactive({
     
     get_var_labels(dta(), unlist = FALSE)
@@ -173,6 +180,9 @@ app_server <- function( input, output, session ) {
   })
   
   output$res_cluster <- renderPrint({ active_clustering() })
+  output$vars_cluster <- renderText({
+    active_clustering()$vars_cluster
+  })
   
   output$cluster_group <- renderPrint({ active_clustering()$cluster })
   
@@ -241,13 +251,6 @@ app_server <- function( input, output, session ) {
     
     
   })
-  
-  
-  # output$by_cluster_silhouette <- renderTable({
-  #   
-  #   by_cluster_silhouette() %>% 
-  #     mutate(Proportion = scales::percent(Proportion, accuracy = 0.1))
-  # }, hover = TRUE, caption = "Silouette")
   
   output$by_cluster_silhouette <- renderReactable({
     
@@ -347,13 +350,12 @@ app_server <- function( input, output, session ) {
   output$plot_sep_matrix <- renderPlot({plot_sep_matrix()})
   
   
-  
   plot_density <- reactive({
-    
+
     req(dta_updated())
     
-    dta_updated() %>% 
-      select(all_of(input$vars_cluster), cluster) %>% 
+    dta_updated() %>%
+      select(all_of(input$vars_cluster), cluster) %>%
       density_plot()
   })
   

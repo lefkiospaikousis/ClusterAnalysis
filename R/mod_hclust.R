@@ -19,6 +19,16 @@ mod_hclust_ui <- function(id){
     col_4(
       h3("Hierarchical Clustering parameters"),
       fluidRow(
+        shinyWidgets::pickerInput(ns("vars_cluster"), "Select variables",
+                                  choices = NULL, selected = character(0),
+                                  multiple = TRUE,
+                                  options = list(`actions-box` = TRUE,
+                                                 `live-Search`  = TRUE,
+                                                 liveSearchStyle = "contains"
+                                  )
+        )
+      ),
+      fluidRow(
         col_4(
           numericInput(ns("n_clust"), "Number of clusters", value = 3),  
           class = "small-font", style = "margin-top: 15px"),
@@ -46,22 +56,34 @@ mod_hclust_ui <- function(id){
 #' Hierarchical Clustering Server Functions
 #'
 #' @noRd 
-mod_hclust_server <- function(id, dta, vars_cluster, seed = reactive(123)){
+mod_hclust_server <- function(id, dta, seed = reactive(123)){
   moduleServer( id, function(input, output, session){
     ns <- session$ns
+    
+    observeEvent(dta(), {
+     
+      shinyWidgets::updatePickerInput(session, "vars_cluster", 
+                                      selected = character(0),
+                                      choices = names(dta())
+                                      
+      )
+      
+    }, priority = 10)
     
     dta_cleaned <- reactive({
       
       req(dta())
       
-      if(!isTruthy(vars_cluster())) {
+      if(!any(input$vars_cluster %in% names(dta()))) {
         validate("Please select at least 1 variable for clustering")
       }
       
+      
       # 1. scale
       dta() %>% 
-        select(all_of(vars_cluster())) %>% 
-        mutate_if(is.numeric, ~ scale2(., na.rm = TRUE)) %>% 
+        select(all_of(input$vars_cluster)) %>% 
+        #mutate_if(is.numeric, ~ scale2(., na.rm = TRUE)) %>% 
+        mutate(across(where(is.numeric), scale2, na.rm = TRUE)) %>% 
         # always do it a dataframe. This keeps the id index of the clustering group
         # as the data.frame keeps the ommited (in case of NA's) indexes
         # The dissimilarity produces by the cluster::daisy, recognizes the ommited cases
@@ -92,16 +114,6 @@ mod_hclust_server <- function(id, dta, vars_cluster, seed = reactive(123)){
     diss_matrix <- reactive({
       
       req(dta_cleaned())
-      
-      # all_vars_numeric <- all(purrr::map_lgl(dta_cleaned(), ~inherits(., "numeric")))
-      # 
-      # 
-      # shinyFeedback::feedback("metric", show = !all_vars_numeric,
-      #                         text = "At least one of your variables is non numeric. 
-      #                         Gower's distance will be used",
-      #                         color = "#068bf8",
-      #                         icon = icon("info-sign", lib = "glyphicon") 
-      # )
       
       calc_diss_matrix(
         dta = dta_cleaned() %>% na.omit(),
@@ -136,6 +148,7 @@ mod_hclust_server <- function(id, dta, vars_cluster, seed = reactive(123)){
           
           res$silhouette <- get_sil_widths(res, diss_matrix())
           res$diss_matrix <- diss_matrix()
+          res$vars_cluster <- isolate(names(dta_cleaned()))
           res
         },
         

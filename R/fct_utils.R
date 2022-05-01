@@ -62,7 +62,7 @@ scale2 <- function(x, na.rm = TRUE) {
 #'  @param type The type of the variable. One of c("numeric", "character", "factor")
 #'  @export
 #'  @return A character vector of variable names 
-find_vars_of_type <- function(data, type =  c("numeric", "character", "factor")) {
+vars_of_type <- function(data, type =  c("numeric", "character", "factor")) {
   
   stopifnot(is.data.frame(data))
   

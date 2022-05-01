@@ -24,6 +24,16 @@ mod_kmeans_ui <- function(id){
           h3("K-means parameters")
         ),
         fluidRow(
+          shinyWidgets::pickerInput(ns("vars_cluster"), "Select variables",
+                                    choices = NULL, selected = character(0),
+                                    multiple = TRUE,
+                                    options = list(`actions-box` = TRUE,
+                                                   `live-Search`  = TRUE,
+                                                   liveSearchStyle = "contains"
+                                    )
+          )
+        ),
+        fluidRow(
           col_4(
             numericInput(ns("n_clust"), "Number of clusters", value = 3),  class = "small-font", style = "margin-top: 15px"),
           col_4(
@@ -43,10 +53,9 @@ mod_kmeans_ui <- function(id){
 #' kmeans Server Functions
 #'
 #' @param dta The dataset. Need a df with at least 2 rows
-#' @param vars_cluster String. A vector  of the variables to use for the clustering
 #' @param seed Numeric length 1. The seed number for reproducibility
 #' @noRd 
-mod_kmeans_server <- function(id, dta, vars_cluster, seed = reactive(123)){
+mod_kmeans_server <- function(id, dta, seed = reactive(123)){
   
   # stopifnot(length(seed) == 1)
   # stopifnot(is.numeric(seed))
@@ -59,30 +68,42 @@ mod_kmeans_server <- function(id, dta, vars_cluster, seed = reactive(123)){
   moduleServer( id, function(input, output, session){
     ns <- session$ns
     
+    observeEvent(dta(), {
+      
+      shinyWidgets::updatePickerInput(session, "vars_cluster",
+                                      selected = character(0),
+                                      choices = names(dta())
+
+      )
+
+    }, priority = 10)
     
     dta_cleaned <- reactive({
       
       req(dta())
       
-      if(!isTruthy(vars_cluster())) {
-        validate("Please select at least 1 numeric variable for clustering")
-      }
       
-      if(!any(vars_cluster() %in% find_vars_of_type(dta(), "numeric"))) {
+      if(!any(input$vars_cluster %in% vars_of_type(dta(), "numeric"))) {
         validate("Please select at least 1 numeric variable for clustering")
       }
       
       # 1. scale
       # 2. only numeric for Kmeans
-      dta() %>% 
-        select(all_of(vars_cluster())) %>% 
+      
+      out <- dta() %>% 
+        select(all_of(input$vars_cluster)) %>% 
         purrr::keep(is.numeric) %>% 
-        mutate_if(is.numeric, ~ scale2(., na.rm = TRUE)) %>% 
-        as.data.frame()
+        mutate(across(where(is.numeric), scale2, na.rm = TRUE)) 
+      
+      new_names <- make.names(names(out))
+      
+      out %>% 
+        rename_all(~new_names) %>%
+        as.data.frame(cut.names = TRUE)
       
     })
     
-    # I do it only for the silhouetee 
+    # I do it only for the silhouette 
     diss_matrix <- reactive({
       
       req(dta_cleaned())
@@ -103,13 +124,14 @@ mod_kmeans_server <- function(id, dta, vars_cluster, seed = reactive(123)){
           set.seed(seed())
           
           res <- kmeans(
-            dta_cleaned() %>% na.omit(),
+            x = dta_cleaned() %>% na.omit(),
             centers = input$n_clust,
             nstart  = input$n_start
           )
           
           res$silhouette <- get_sil_widths(res, diss_matrix())
           res$diss_matrix <- diss_matrix()
+          res$vars_cluster <- res$centers %>% dimnames() %>% .[[2]]
           res
         },
         
@@ -132,14 +154,7 @@ mod_kmeans_server <- function(id, dta, vars_cluster, seed = reactive(123)){
     output$clust_index <- renderPrint(clustering_vector())
     
     
-    return(
-      k_means
-      # list(
-      #   res = k_means,
-      #   silhouette = tbl_silhouette
-      # )
-      
-    )
+    return( k_means )
     
     
   })
