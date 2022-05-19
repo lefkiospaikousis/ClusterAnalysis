@@ -36,15 +36,26 @@ app_server <- function( input, output, session ) {
   
   active_clustering <- reactive({
     
-    switch (input$cluster_method,
-                   "k-means" = res_kmeans(),
-                   'k-meds'  = res_kmeds(),
-                   'h-clust' = res_hclust(),
-                   validate(glue::glue("{input$cluster_method} Not yet ready"))
+    out <- switch (input$cluster_method,
+            "k-means" = res_kmeans(),
+            'k-meds'  = res_kmeds(),
+            'h-clust' = res_hclust(),
+            validate(glue::glue("{input$cluster_method} Not yet ready"))
     )
+    
+    
+    
+    out
     
   }) 
   
+  observeEvent(active_clustering(),{
+    
+    shinyjs::show("cluster_output", anim = TRUE)
+    shinyjs::hide(selector = "div.box")
+    
+  }
+  )
   
   observeEvent(input$cluster_method, {
     updateTabsetPanel(inputId = "switcher", selected = input$cluster_method)
@@ -101,21 +112,6 @@ app_server <- function( input, output, session ) {
     ,"ch"
   )
   
-  info <- list(
-    
-    silhouette = "The silhouette value is a measure of how similar an object is 
-    to its own cluster (cohesion) compared to other clusters (separation). 
-    The silhouette ranges from −1 to +1, where a high value indicates that the 
-    object is well matched to its own cluster and poorly matched to neighboring 
-    clusters. If most objects have a high value, then the clustering configuration 
-    is appropriate. If many points have a low or negative value, then the 
-    clustering configuration may have too many or too few clusters."
-    
-    
-  )
-  
-  
-  
   # Server declaration ------------------------------------------------------
   
   dta_upld <- mod_upload_file_server("upload_file_ui_1")
@@ -134,7 +130,8 @@ app_server <- function( input, output, session ) {
       
       dta_error(FALSE)
       file_uploaded(TRUE)
-      
+      shinyjs::hideElement("sample_data_info", anim = TRUE)
+      shinyjs::hideElement("sample_data_info1", anim = TRUE)
     }
     
   })
@@ -179,7 +176,10 @@ app_server <- function( input, output, session ) {
     
   })
   
+  
   output$res_cluster <- renderPrint({ active_clustering() })
+  
+  
   output$vars_cluster <- renderText({
     active_clustering()$vars_cluster
   })
@@ -192,7 +192,6 @@ app_server <- function( input, output, session ) {
   
   
   dta_updated <- reactive({
-    
     
     # add silhouette information
     # add cluster membership
@@ -254,6 +253,8 @@ app_server <- function( input, output, session ) {
   
   output$by_cluster_silhouette <- renderReactable({
     
+    req(tbl_silhouette())
+    
     dta <- by_cluster_silhouette()
     
     dta %>% 
@@ -270,9 +271,12 @@ app_server <- function( input, output, session ) {
   })
   
   
-  output$info_sil <- renderUI(with_tooltip("The silhouete", info$silhouette, 
-                                           interactive = TRUE
-  ))
+  output$info_sil <- renderUI({
+    
+    req(active_clustering())
+    with_tooltip("The silhouete", info$silhouette, interactive = TRUE)
+    
+  })
   
   cluster_stats <- reactive({
     
@@ -293,6 +297,8 @@ app_server <- function( input, output, session ) {
   })
   
   output$tbl_cluster_stats <- reactable::renderReactable({
+    
+    req(tbl_cluster_stats())
     
     tbl_cluster_stats() %>% 
       mutate(
@@ -315,35 +321,19 @@ app_server <- function( input, output, session ) {
   
   tbl_sep_matrix <- reactive({
     
-    sep_matrix <- cluster_stats()$separation.matrix
-    n <- cluster_stats()$cluster.number
-    
-    colnames(sep_matrix) <- paste0("Cluster ", seq_len(n))
-    row.names(sep_matrix) <- paste0("Cluster ", seq_len(n))
-    
-    #sep_matrix[lower.tri(sep_matrix, diag = TRUE)] <- NA
-    as_tibble(sep_matrix, rownames = "Cluster")
+    as_tbl_sep_matrix(cluster_stats()$separation.matrix) 
     
   })
   
   output$tbl_sep_matrix <- renderTable({
+    
     tbl_sep_matrix()
   }
   , hover = TRUE, caption = "Cluster Separation Index")
   
   plot_sep_matrix <- reactive({
     
-    tbl_sep_matrix() %>%
-      tidyr::gather(key, value, -Cluster) %>%
-      arrange(Cluster, key) %>%
-      ggplot2::ggplot(ggplot2::aes(Cluster, key))+
-      ggplot2::geom_tile(ggplot2::aes(fill = value))+
-      ggplot2::scale_fill_gradient2(high = "#018571", low = "#d7191c")+
-      ggplot2::geom_text(ggplot2::aes(label = round(value, 2)))+
-      ggplot2::labs(x = "", y= "", fill = "Separation\nlevel",
-                    title = "Separation between clusters",
-                    subtitle = "Higher value ~ higher separation between the pair of clusters")+
-      ggplot2::theme_light(14)
+    gg_separation_matrix(cluster_stats()$separation.matrix)
     
   })
   
@@ -351,12 +341,27 @@ app_server <- function( input, output, session ) {
   
   
   plot_density <- reactive({
-
+    
     req(dta_updated())
     
-    dta_updated() %>%
-      select(all_of(input$vars_cluster), cluster) %>%
-      density_plot()
+    tryCatch({
+      vars_cluster <- isolate(active_clustering()$vars_cluster)
+      
+      if(!anyNumeric(dta_updated()[vars_cluster])) {
+        validate("For the density plots, we need at least 1 numeric variable")
+      }
+      
+      dta_updated() %>%
+        select(cluster, all_of(vars_cluster)) %>% 
+        gg_density_plot()
+      
+    },
+    error = function(e){
+      print(e)
+      validate("We apologise. Something went wrong!")
+    }
+    )
+    
   })
   
   height_p <- reactive({
@@ -364,10 +369,10 @@ app_server <- function( input, output, session ) {
     dim <- facet_panel_dimensions(plot_density())
     
     switch (dim$rows,
-      "1" = 300,
-      "2" = 500,
-      "3" = 600,
-      600
+            "1" = 300,
+            "2" = 500,
+            "3" = 600,
+            600
     )
     
   })
@@ -378,6 +383,7 @@ app_server <- function( input, output, session ) {
     
     
   }, height = function() height_p())
+  
   # Dendrogram --------------------------------------------------------------
   
   
@@ -385,8 +391,6 @@ app_server <- function( input, output, session ) {
     
     req(res_hclust())
     req(input$cluster_method == "h-clust")
-    
-    
     
     dendro <- stats::as.dendrogram(res_hclust())
     

@@ -16,40 +16,36 @@
 mod_hclust_ui <- function(id){
   ns <- NS(id)
   tagList(
-    col_4(
-      h3("Hierarchical Clustering parameters"),
-      fluidRow(
-        shinyWidgets::pickerInput(ns("vars_cluster"), "Select variables",
-                                  choices = NULL, selected = character(0),
-                                  multiple = TRUE,
-                                  options = list(`actions-box` = TRUE,
-                                                 `live-Search`  = TRUE,
-                                                 liveSearchStyle = "contains"
-                                  )
+    fluidRow(
+      h3("Hierarchical Clustering")
+    ),
+    fluidRow(
+      pickVarsInput(ns("vars_cluster"))
+    ),
+    fluidRow(
+      col_3(
+        numericInput(ns("n_clust"), "Number of clusters", value = 3)
+      ),   #class = "small-font", style = "margin-top: 15px"),
+      col_4(
+        selectInput(ns("metric"), "Metric for dissimilarity matrix", 
+                    choices = c("Euclidean" = "euclidean",
+                                "Manhattan" = "manhattan",
+                                "Gower's distance" = "gower")
         )
-      ),
-      fluidRow(
-        col_4(
-          numericInput(ns("n_clust"), "Number of clusters", value = 3),  
-          class = "small-font", style = "margin-top: 15px"),
-        col_4(
-          selectInput(ns("metric"), "Metric for dissimilarity matrix", 
-                      choices = c("Euclidean" = "euclidean",
-                                  "Manhattan" = "manhattan",
-                                  "Gower's distance" = "gower")
-          ),  class = "small-font"),
-        col_4(
-          selectInput(ns("hc_linkage"), "Linkage method", 
-                      choices = c("Ward's method" = "ward", 
-                                  "Single linkage" = "single", 
-                                  "Complete linkage" = "complete", 
-                                  "Average (UPGMA)" = "average",
-                                  "Weighted Average linkage (WPGMA)" = "average"
-                      )
-          ),  class = "small-font", style = "margin-top: 15px")
-        
-      )
-    )   
+      ), #,  class = "small-font"),
+      column(width = 5,
+             selectInput(ns("hc_linkage"), "Linkage method", 
+                         choices = c("Ward's method" = "ward", 
+                                     "Single linkage" = "single", 
+                                     "Complete linkage" = "complete", 
+                                     "Average (UPGMA)" = "average",
+                                     "Weighted Average linkage (WPGMA)" = "average")
+                         
+                         
+             ),  style = "margin-top: 17px"
+      ) #,  class = "small-font", style = "margin-top: 15px")
+      
+    )
   )
 }
 
@@ -61,7 +57,7 @@ mod_hclust_server <- function(id, dta, seed = reactive(123)){
     ns <- session$ns
     
     observeEvent(dta(), {
-     
+      
       shinyWidgets::updatePickerInput(session, "vars_cluster", 
                                       selected = character(0),
                                       choices = names(dta())
@@ -78,15 +74,14 @@ mod_hclust_server <- function(id, dta, seed = reactive(123)){
         validate("Please select at least 1 variable for clustering")
       }
       
-      
       # 1. scale
       dta() %>% 
         select(all_of(input$vars_cluster)) %>% 
-        #mutate_if(is.numeric, ~ scale2(., na.rm = TRUE)) %>% 
         mutate(across(where(is.numeric), scale2, na.rm = TRUE)) %>% 
-        # always do it a dataframe. This keeps the id index of the clustering group
-        # as the data.frame keeps the ommited (in case of NA's) indexes
-        # The dissimilarity produces by the cluster::daisy, recognizes the ommited cases
+        # as.data.frame keeps the id index of the clustering group
+        # It keeps the ommited (in case of NA's) indexes
+        # The dissimilarity produces by the cluster::daisy, recognises the
+        # ommited cases
         as.data.frame()
       
     })
@@ -144,6 +139,7 @@ mod_hclust_server <- function(id, dta, seed = reactive(123)){
           ids <- attr(diss_matrix(), "Labels")
           
           # add a cluster- a named vector 
+          # Silhouette are defined for 2 <= k <= n-1; k-cluster, n subjects
           res$cluster <- stats::cutree(res, input$n_clust) %>% setNames(ids)
           
           res$silhouette <- get_sil_widths(res, diss_matrix())
@@ -155,7 +151,14 @@ mod_hclust_server <- function(id, dta, seed = reactive(123)){
         error = function(e){
           
           print(e)
-          validate("Something has gone wrong with the Hierarchical clustering")
+          
+          if(input$n_clust<=2 || input$n_clust>=nrow(dta_cleaned())-2){
+            validate("Opps. Select at least 2 clusters")
+          } else {
+            validate("Something has gone wrong with the Hierarchical clustering")
+            
+          }
+          
           
         }
       )

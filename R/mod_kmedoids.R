@@ -16,31 +16,24 @@
 mod_kmedoids_ui <- function(id){
   ns <- NS(id)
   tagList(
-    col_4(
-      h3("K-medoids parameters"),
       fluidRow(
-        shinyWidgets::pickerInput(ns("vars_cluster"), "Select variables",
-                                  choices = NULL, selected = character(0),
-                                  multiple = TRUE,
-                                  options = list(`actions-box` = TRUE,
-                                                 `live-Search`  = TRUE,
-                                                 liveSearchStyle = "contains"
-                                  )
-        )
+        h3("K-medoids clustering")
+      ),
+      fluidRow(
+        pickVarsInput(ns("vars_cluster")),
       ),
       fluidRow(
         col_4(
-          numericInput(ns("n_clust"), "Number of clusters", value = 3), 
-          class = "small-font"),# style = "margin-top: 15px"),
+          numericInput(ns("n_clust"), "Number of clusters", value = 3)
+          ),#,class = "small-font"),# style = "margin-top: 15px"),
         col_6(
           selectInput(ns("metric"), 
                       "Metric for dissimilarity matrix", 
                       choices = c("Euclidean" = "euclidean",
                                   "Manhattan" = "manhattan",
                                   "Gower's distance" = "gower")
-          ),  class = "small-font")
+          )), #,  class = "small-font")
       )   
-    )
   )
 }
 
@@ -60,7 +53,7 @@ mod_kmedoids_server <- function(id, dta, seed = reactive(123)){
                                       inputId = "vars_cluster",
                                       selected = character(0),
                                       choices = names(dta())
-
+                                      
       )
     }, priority = 10)
     
@@ -73,15 +66,13 @@ mod_kmedoids_server <- function(id, dta, seed = reactive(123)){
         validate("Please select at least 1 variable for clustering")
       }
       
-      
       # 1. scale
       dta() %>% 
         select(all_of(input$vars_cluster)) %>% 
         mutate(across(where(is.numeric), scale2, na.rm = TRUE)) %>% 
-        #mutate_if(is.numeric, ~ scale2(., na.rm = TRUE)) %>% 
-        # always do it a dataframe. This keeps the id index of the clustering group
-        # as the data.frame keeps the ommited (in case of NA's) indexes
-        # The dissimilarity produces by the cluster::daisy, recongnises thw
+        # as.data.frame keeps the id index of the clustering group
+        # It keeps the ommited (in case of NA's) indexes
+        # The dissimilarity produces by the cluster::daisy, recognises the
         # ommited cases
         as.data.frame()
       
@@ -89,7 +80,7 @@ mod_kmedoids_server <- function(id, dta, seed = reactive(123)){
     
     
     observeEvent(dta_cleaned(), {
-     
+      
       all_vars_numeric <- all(purrr::map_lgl(dta_cleaned(), ~inherits(., "numeric")))
       
       shinyFeedback::feedback("metric", show = !all_vars_numeric,

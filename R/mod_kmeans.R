@@ -16,37 +16,20 @@
 mod_kmeans_ui <- function(id){
   ns <- NS(id)
   tagList(
-    
-    col_4(
-      
-      div(
         fluidRow(
-          h3("K-means parameters")
+          h3("K-means clustering")
         ),
         fluidRow(
-          shinyWidgets::pickerInput(ns("vars_cluster"), "Select variables",
-                                    choices = NULL, selected = character(0),
-                                    multiple = TRUE,
-                                    options = list(`actions-box` = TRUE,
-                                                   `live-Search`  = TRUE,
-                                                   liveSearchStyle = "contains"
-                                    )
-          )
+          pickVarsInput(ns("vars_cluster"))
         ),
         fluidRow(
           col_4(
-            numericInput(ns("n_clust"), "Number of clusters", value = 3),  class = "small-font", style = "margin-top: 15px"),
+            numericInput(ns("n_clust"), "Number of clusters", value = 3),  style = "margin-top: 17px"),
           col_4(
-            numericInput(ns("iter.max"), "Maximum number of iterations", value = 1),  class = "small-font"),
+            numericInput(ns("iter.max"), "Maximum number of iterations", value = 1)),
           col_4(
-            numericInput(ns("n_start"), "Random sets of cluster centers", value = 10),  class = "small-font")
+            numericInput(ns("n_start"), "Random sets of cluster centers", value = 10))
         ) 
-        
-        #, style = "border-style: solid; border-color: coral"
-        )
-      
-    )
-    
   )
 }
 
@@ -59,12 +42,9 @@ mod_kmeans_server <- function(id, dta, seed = reactive(123)){
   
   # stopifnot(length(seed) == 1)
   # stopifnot(is.numeric(seed))
-  
   # stopifnot(inherits(dta(), "data.frame"))
   # stopifnot(nrow(dta()) > 1)
   # 
-  # stopifnot(all(vars_cluster %in% names(dta())))
-  
   moduleServer( id, function(input, output, session){
     ns <- session$ns
     
@@ -72,9 +52,7 @@ mod_kmeans_server <- function(id, dta, seed = reactive(123)){
       
       shinyWidgets::updatePickerInput(session, "vars_cluster",
                                       selected = character(0),
-                                      choices = names(dta())
-
-      )
+                                      choices = names(dta()))
 
     }, priority = 10)
     
@@ -82,6 +60,7 @@ mod_kmeans_server <- function(id, dta, seed = reactive(123)){
       
       req(dta())
       
+      req(any(input$vars_cluster %in% vars_of_type(dta(), "numeric")))
       
       if(!any(input$vars_cluster %in% vars_of_type(dta(), "numeric"))) {
         validate("Please select at least 1 numeric variable for clustering")
@@ -99,6 +78,10 @@ mod_kmeans_server <- function(id, dta, seed = reactive(123)){
       
       out %>% 
         rename_all(~new_names) %>%
+        # as.data.frame keeps the id index of the clustering group
+        # It keeps the ommited (in case of NA's) indexes
+        # The dissimilarity produces by the cluster::daisy, recognises the
+        # ommited cases
         as.data.frame(cut.names = TRUE)
       
     })
