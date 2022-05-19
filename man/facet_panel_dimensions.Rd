@@ -21,6 +21,7 @@ of a \code{shiny::renderPlot()}
 Some details here :)
 }
 \examples{
+library(ggplot2)
 p1 <- ggplot(mtcars, aes(mpg, wt)) + facet_wrap(~ gear )
 facet_panel_dimensions(p1)
 p2 <- ggplot(mtcars, aes(mpg, wt)) + facet_grid(cyl ~ gear )
