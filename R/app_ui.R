@@ -16,7 +16,7 @@ app_ui <- function(request) {
                               font_scale = 0.7
                               #,"input-border-color" = "#55595e"
       ),
-      titlePanel("Cluster Analysis"),
+      titlePanel("Cluster Analysis Web Application"),
       
       sidebarLayout(
         sidebarPanel(
@@ -104,16 +104,6 @@ app_ui <- function(request) {
                      reactable::reactableOutput("dta"),
                      width = 8
             ),
-            tabPanel("Plots",
-                     div(class = "info box", "-Select variables to continue-"),
-                     div(id = "plot_outputs",
-                         plotOutput("plot_density")
-                     ),
-                     fluidRow(
-                       #verbatimTextOutput("res_cluster")
-                     )
-                     
-            ),
             tabPanel("Internal Validation",
                      fluidRow(
                        div(class = "info box", "-Select variables to continue-"),
@@ -139,6 +129,13 @@ app_ui <- function(request) {
                          )
                        )
                      )
+            ),
+            tabPanel("Plots",
+                     div(class = "info box", "-Select variables to continue-"),
+                     div(id = "plot_outputs",
+                         plotOutput("plot_density")
+                     )
+                     
             ),
             tabPanel("Options",
                      fluidRow(
