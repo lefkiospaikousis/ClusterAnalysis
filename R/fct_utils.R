@@ -30,9 +30,12 @@ clean_sav <- function(dta){
 }
 
 
+
+#' Get the variable labels
+#' 
 #' Adapted from 
 #' https://github.com/larmarange/labelled/blob/main/R/var_label.R
-
+#' @noRd
 get_var_labels <- function(x, unlist = FALSE) {
   
   r <- lapply(x, function(x) attr(x, "label", exact = TRUE))
@@ -45,8 +48,8 @@ get_var_labels <- function(x, unlist = FALSE) {
 }
 
 #' Standardise a variable
+#' 
 #' @param x A numeric vector
-#' @noRd
 #' @export
 scale2 <- function(x, na.rm = TRUE) {
   
@@ -90,6 +93,7 @@ vars_of_type <- function(data, type =  c("numeric", "character", "factor")) {
 #' Function to wrap titles, so they show completely when saving plot in ggplot
 #' 
 #' Stolen from https://github.com/Public-Health-Scotland/scotpho-profiles-tool/blob/master/shiny_app/global.R
+#' @noRd
 wrap_title <- function(x, ...) 
 {
   paste(strwrap(x, ...), collapse = "\n")
@@ -98,6 +102,7 @@ wrap_title <- function(x, ...)
 #' Create an empty plot
 #' 
 #' This function prints a plot when no data available for ggplot visuals
+#' @noRd
 plot_nodata_gg <- function() {
   
   ggplot()+
@@ -112,10 +117,11 @@ plot_nodata_gg <- function() {
 
 #' Calculate the dissimilarity matrix
 #' 
-#' @details Uses the \code{\link{cluster::daisy}} function. This function
+#' Uses the \code{cluster::daisy} function. This function
 #' needs the character columns as factors to properly function
 #' 
 #' @param dta A dataframe. The data
+#' @param metric The metric to use %>% 
 #' @export
 calc_diss_matrix <- function(dta, metric = c("euclidean", "manhattan", "gower")){
   
@@ -197,31 +203,13 @@ get_sil_widths <- function(obj, diss_matrix){
 }
 
 
-#' Title
-#'
-#' @param dta 
-#' @param cluster_group 
-#'
-#' @return
-#' @export
-add_cluster_to_dta <- function(dta, cluster_group){
-  
-  stopifnot(all(dim(dta) > 0))
-  stopifnot(is.numeric(cluster_group))
-  stopifnot(length(cluster_group) <= nrow((dta)))
-  
-}
-
-
 #' Add silhouette information on the the dataset
 #'
 #' It adds not only the `sil_width` but also the cluster membership
 #' and the neighbor cluster
 #' @param dta The original data
-#'
 #' @param tbl_silhouette A dataframe. Output of the \code{get_sil_widths}
 #' 
-#' @return
 #' @export
 add_silhouette <- function(dta, tbl_silhouette){
   
@@ -265,6 +253,7 @@ with_tooltip <- function(value, tooltip, ...) {
 #' @return A named list of the number of $rows and $cols
 #' @export
 #' @examples 
+#' library(ggplot2)
 #' p1 <- ggplot(mtcars, aes(mpg, wt)) + facet_wrap(~ gear )
 #' facet_panel_dimensions(p1)
 #' p2 <- ggplot(mtcars, aes(mpg, wt)) + facet_grid(cyl ~ gear )

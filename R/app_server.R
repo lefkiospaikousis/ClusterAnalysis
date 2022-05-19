@@ -6,6 +6,7 @@
 #' @import dplyr
 #' @importFrom reactable reactable renderReactable reactableOutput colDef colFormat
 #' @importFrom ggplot2 ggplot aes geom_density geom_vline facet_wrap scale_color_manual scale_fill_brewer
+#' @importFrom stats complete.cases kmeans median na.omit sd setNames
 #' @noRd
 app_server <- function( input, output, session ) {
   

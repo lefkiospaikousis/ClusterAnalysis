@@ -9,7 +9,6 @@
 #' @return A ggplot. The result is a faceted plot (facet: each variable)
 #'
 #' @param dta The data
-#' @noRd
 #' @export
 gg_density_plot <- function(dta){
   
@@ -99,12 +98,9 @@ gg_separation_matrix <- function(sep_matrix) {
     ggplot2::theme_light(14)
 }
 
-#' Tbl separation matrix
+#' Turn separation matrix to a tibble
 #' 
-#' @param cluster_stats A list that contains    
-#' - separation.matrix
-#' - cluster.number
-#' Usually a results of the fpc::cluster.stats()
+#' @param sep_matrix A separation matrix, usually from fpc::cluster.stats()   
 as_tbl_sep_matrix <- function(sep_matrix){
   
   stopifnot({
@@ -120,7 +116,6 @@ as_tbl_sep_matrix <- function(sep_matrix){
   
   as_tibble(sep_matrix, rownames = "Cluster") 
   
-  #sep_matrix[lower.tri(sep_matrix, diag = TRUE)] <- NA
 }
 
 
