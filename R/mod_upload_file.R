@@ -12,8 +12,8 @@ mod_upload_file_ui <- function(id){
   tagList(
     
     fileInput(ns("file"), 
-      label = HTML("Currently accepted data formats:<br>
-                   .csv, .tsv, .sav(SPSS), or .xlsx, .xls (Excel) files"), 
+      label = HTML("Accepted data formats:
+                   .csv, .tsv, .xlsx, .xls, or .sav files"), 
       accept = c(".csv", ".tsv", ".sav", ".xlsx", ".xls")),
   )
 }
@@ -36,11 +36,11 @@ mod_upload_file_server <- function(id){
           
           dta <- process_file(dta)
           
-          shinyFeedback::showToast(
-            type = "success", message = "Data imported succesfully",
-            .options = list(positionClass = "toast-top-center")
-          )
-          
+          # shinyFeedback::showToast(
+          #   type = "success", message = "Data imported succesfully",
+          #   .options = list(positionClass = "toast-top-center")
+          # )
+          showNotification("Data imported succesfully", type = "message")
           return(dta)
           
         },
@@ -50,22 +50,29 @@ mod_upload_file_server <- function(id){
           #' NOTE: The `Invalid file` error message in found in the `read_file()` function
           if(e$message == "Invalid file"){
             
-            shinyFeedback::showToast(
-              type = "error", title = "Invalid file!", 
-              message = HTML("Accepted file types are:<br>.csv, .tsv, .xlsx, .xls, .sav"),
-              keepVisible = TRUE,
-              .options = list(positionClass = "toast-top-center",
-                              closeButton = TRUE)
-            )
+            # shinyFeedback::showToast(
+            #   type = "error", title = "Invalid file!", 
+            #   message = HTML("Accepted file types are:<br>.csv, .tsv, .xlsx, .xls, .sav"),
+            #   keepVisible = TRUE,
+            #   .options = list(positionClass = "toast-top-center",
+            #                   closeButton = TRUE)
+            # )
+            showNotification(
+              HTML("Invalid File!<br> Accepted file types are: .csv, .tsv, .xlsx, .xls, .sav")
+              , type = "error")
             
           } else {
             
-            shinyFeedback::showToast(
-              type = "error", title = "Oopss!", 
-              message = "Something went wrong when uploading your file",
-              .options = list(positionClass = "toast-top-center",
-                              showDuration = 1000)
-            )
+            # shinyFeedback::showToast(
+            #   type = "error", title = "Oopss!", 
+            #   message = "Something went wrong when uploading your file",
+            #   .options = list(positionClass = "toast-top-center",
+            #                   showDuration = 1000)
+            # )
+            
+            showNotification(
+              "Something went wrong when uploading your file"
+              , type = "error")
             
           }
           
