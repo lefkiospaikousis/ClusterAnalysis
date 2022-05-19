@@ -4,3 +4,52 @@
   padding:4px; 
   font-size:80%
 }
+
+
+/* Put shiny notifications front and center */
+/*https://github.com/rstudio/shiny/issues/2988*/
+
+#shiny-notification-panel {
+  top: 0;
+  bottom: unset;
+  left: 0;
+  right: 0;
+  margin-left: auto;
+  margin-right: auto;
+  width: 100%;
+  max-width: 450px;
+}
+
+
+.box {
+  width: 400px;
+  height: 60px;
+  border: 2px solid #000;
+  margin: 20px auto 15px;
+  text-align: center;
+  padding: 20px;
+  font-weight: bold;
+  border-radius: 10px;
+}
+
+.info {
+  background-color: #ddd;
+  border-color: #55595E; 
+}
+
+.warning {
+  background-color: #FFF484;
+  border-color: #DCC600;
+}
+
+.success {
+  background-color: #B9FFAB;
+  border-color: #116400;
+  color: #116400;
+}
+
+.error {
+  background-color: #EBB1B1;
+  border-color: #973939;
+  color: #973939;
+}
