@@ -2,16 +2,13 @@
 % Please edit documentation in R/fct_plots.R
 \name{as_tbl_sep_matrix}
 \alias{as_tbl_sep_matrix}
-\title{Tbl separation matrix}
+\title{Turn separation matrix to a tibble}
 \usage{
 as_tbl_sep_matrix(sep_matrix)
 }
 \arguments{
-\item{cluster_stats}{A list that contains
-- separation.matrix
-- cluster.number
-Usually a results of the fpc::cluster.stats()}
+\item{sep_matrix}{A separation matrix, usually from fpc::cluster.stats()}
 }
 \description{
-Tbl separation matrix
+Turn separation matrix to a tibble
 }

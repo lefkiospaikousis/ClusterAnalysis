@@ -11,9 +11,6 @@ add_silhouette(dta, tbl_silhouette)
 
 \item{tbl_silhouette}{A dataframe. Output of the \code{get_sil_widths}}
 }
-\value{
-
-}
 \description{
 It adds not only the `sil_width` but also the cluster membership
 and the neighbor cluster

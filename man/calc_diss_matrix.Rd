@@ -8,11 +8,10 @@ calc_diss_matrix(dta, metric = c("euclidean", "manhattan", "gower"))
 }
 \arguments{
 \item{dta}{A dataframe. The data}
+
+\item{metric}{The metric to use %>%}
 }
 \description{
-Calculate the dissimilarity matrix
-}
-\details{
-Uses the \code{\link{cluster::daisy}} function. This function
+Uses the \code{cluster::daisy} function. This function
 needs the character columns as factors to properly function
 }
