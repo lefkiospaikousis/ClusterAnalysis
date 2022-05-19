@@ -364,15 +364,27 @@ app_server <- function( input, output, session ) {
     
   })
   
-  height_p <- reactive({
+  dim_p <- reactive({
     
     dim <- facet_panel_dimensions(plot_density())
     
-    switch (dim$rows,
+    height <- switch (dim$rows,
             "1" = 300,
             "2" = 500,
             "3" = 600,
             600
+    )
+    
+    
+    width <- switch (dim$cols,
+                      "1" = 600,
+                      "2" = 700,
+                      "auto"
+    )
+    
+    list(
+      height = height,
+      width = width
     )
     
   })
@@ -382,7 +394,7 @@ app_server <- function( input, output, session ) {
     plot_density()
     
     
-  }, height = function() height_p())
+  }, height = function() dim_p()$height, width = function() dim_p()$width, )
   
   # Dendrogram --------------------------------------------------------------
   
