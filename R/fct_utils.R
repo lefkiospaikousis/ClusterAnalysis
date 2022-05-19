@@ -44,7 +44,13 @@ get_var_labels <- function(x, unlist = FALSE) {
     r
 }
 
+#' Standardise a variable
+#' @param x A numeric vector
+#' @noRd
+#' @export
 scale2 <- function(x, na.rm = TRUE) {
+  
+  stopifnot(is.numeric(x))
   
   (x - mean(x, na.rm = na.rm)) / sd(x, na.rm)
   
@@ -79,9 +85,12 @@ vars_of_type <- function(data, type =  c("numeric", "character", "factor")) {
 }
 
 
-#Function to wrap titles, so they show completely when saving plot in ggplot
-# TODO Stolen from https://github.com/Public-Health-Scotland/scotpho-profiles-tool/blob/master/shiny_app/global.R
-title_wrapper <- function(x, ...) 
+#' Wrap titles 
+#' 
+#' Function to wrap titles, so they show completely when saving plot in ggplot
+#' 
+#' Stolen from https://github.com/Public-Health-Scotland/scotpho-profiles-tool/blob/master/shiny_app/global.R
+wrap_title <- function(x, ...) 
 {
   paste(strwrap(x, ...), collapse = "\n")
 }
@@ -216,15 +225,16 @@ add_cluster_to_dta <- function(dta, cluster_group){
 #' @export
 add_silhouette <- function(dta, tbl_silhouette){
   
+  stopifnot({
+    inherits(tbl_silhouette, "data.frame")
+    all(dim(tbl_silhouette) > 0)
+    all(dim(dta) > 0)
+    not_null(tbl_silhouette$sil_width)
+    nrow(tbl_silhouette) <= nrow(dta)
+  })
   
-  stopifnot(is.data.frame(tbl_silhouette))
-  stopifnot(all(dim(dta) > 0))
-  stopifnot(all(dim(tbl_silhouette) > 0))
-  stopifnot(!is.null(tbl_silhouette$sil_width))
-  stopifnot(nrow(tbl_silhouette) <= nrow(dta))
   
   # in case there are similar column names in the data
-  
   dta %>% 
     left_join(
       tbl_silhouette, by = ".rowid", suffix = c("_varOfDF", "")
@@ -273,7 +283,42 @@ facet_panel_dimensions <- function(p){
 }
 
 
+anyNumeric <- function(dta){
+  
+  any(purrr::map_lgl(dta, ~inherits(., c("numeric", "integer"))))
+}
 
+pickVarsInput <- function(.id, label = "Select variables"){
+  
+  shinyWidgets::pickerInput(.id, "Select variables",
+                            choices = NULL, selected = character(0),
+                            multiple = TRUE,
+                            options = list(`actions-box` = TRUE,
+                                           `live-Search`  = TRUE,
+                                           liveSearchStyle = "contains",
+                                           style = 'btn-default'),
+                            width = "80%"
+  )
+}
+
+
+
+info <- function() {
+  
+  list(
+    
+    silhouette = "The silhouette value is a measure of how similar an object is 
+    to its own cluster (cohesion) compared to other clusters (separation). 
+    The silhouette ranges from −1 to +1, where a high value indicates that the 
+    object is well matched to its own cluster and poorly matched to neighboring 
+    clusters. If most objects have a high value, then the clustering configuration 
+    is appropriate. If many points have a low or negative value, then the 
+    clustering configuration may have too many or too few clusters."
+    
+    
+  )
+  
+}
 
 
 

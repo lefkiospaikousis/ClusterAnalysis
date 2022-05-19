@@ -1,13 +1,17 @@
-#' plots 
+# A set of functions for creating ggplots for exploring the cluster solutions
+
+
+#' Create a density plot 
 #'
-#' @description A fct function
+#' This function creates a faceted density plot to demonstrate the 
+#' distribution of the variables within each cluster.
 #'
-#' @return The return value, if any, from executing the function.
+#' @return A ggplot. The result is a faceted plot (facet: each variable)
 #'
 #' @param dta The data
 #' @noRd
 #' @export
-density_plot <- function(dta){
+gg_density_plot <- function(dta){
   
   stopifnot("cluster" %in% names(dta))
   
@@ -43,12 +47,81 @@ density_plot <- function(dta){
     ggplot2::labs(linetype = "")+
     scale_color_manual(name = "Overall stats", 
                        values = c(Median = "black", Average = "violet")
-                      #, guide = guide_legend(reverse = FALSE)
-                       )+
+                       #, guide = guide_legend(reverse = FALSE)
+    )+
     scale_fill_brewer(name = "Cluster", type = "qual", palette = 2
                       #, guide = guide_legend(reverse = TRUE)
-                      )+
+    )+
     ggplot2::theme_classic(14)+
     ggplot2::theme(legend.position = 'top')
   
 }
+
+
+
+#' Plot a separation matrix
+#' 
+#' This function plots a tile plot of the separation matrix of a cluster solution
+#' 
+#' Assume n clusters, the separation matrix is a `n x n` table, with 
+#' cluster separation values for each pair of clusters. This is the result of 
+#' fpc::cluster.stats()$separation.matrix
+#'
+#' @param sep_matrix An nxn matrix. 
+#'
+#' @return
+#' @export
+gg_separation_matrix <- function(sep_matrix) {
+  
+  stopifnot({
+    inherits(sep_matrix, "matrix")
+    length(unique(dim(sep_matrix))) == 1
+  })
+  
+  # # Make it a tibble with cols and row names
+  # n <- dim(sep_matrix)[[1]]
+  # 
+  # colnames(sep_matrix) <- paste0("Cluster ", seq_len(n))
+  # row.names(sep_matrix) <- paste0("Cluster ", seq_len(n))
+  
+  tibble_matrix <- as_tbl_sep_matrix(sep_matrix) 
+  
+  tibble_matrix %>% 
+    tidyr::gather(key, value, -Cluster) %>%
+    arrange(Cluster, key) %>%
+    ggplot2::ggplot(ggplot2::aes(Cluster, key))+
+    ggplot2::geom_tile(ggplot2::aes(fill = value))+
+    ggplot2::scale_fill_gradient2(high = "#018571", low = "#d7191c")+
+    ggplot2::geom_text(ggplot2::aes(label = round(value, 2)))+
+    ggplot2::labs(x = "", y= "", fill = "Separation\nlevel",
+                  title = "Separation between clusters",
+                  subtitle = "Higher value ~ higher separation between the pair of clusters")+
+    ggplot2::theme_light(14)
+}
+
+#' Tbl separation matrix
+#' 
+#' @param cluster_stats A list that contains    
+#' - separation.matrix
+#' - cluster.number
+#' Usually a results of the fpc::cluster.stats()
+as_tbl_sep_matrix <- function(sep_matrix){
+  
+  stopifnot({
+    inherits(sep_matrix, "matrix")
+    length(unique(dim(sep_matrix))) == 1
+  })
+  
+  # Make it a tibble with cols and row names
+  n <- dim(sep_matrix)[[1]]
+  
+  colnames(sep_matrix) <- paste0("Cluster ", seq_len(n))
+  row.names(sep_matrix) <- paste0("Cluster ", seq_len(n))
+  
+  as_tibble(sep_matrix, rownames = "Cluster") 
+  
+  #sep_matrix[lower.tri(sep_matrix, diag = TRUE)] <- NA
+}
+
+
+
