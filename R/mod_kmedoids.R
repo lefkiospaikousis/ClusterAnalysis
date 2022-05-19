@@ -24,7 +24,7 @@ mod_kmedoids_ui <- function(id){
       ),
       fluidRow(
         col_4(
-          numericInput(ns("n_clust"), "Number of clusters", value = 3)
+          numericInput(ns("n_clust"), "Number of clusters", value = 3, min = 2)
           ),#,class = "small-font"),# style = "margin-top: 15px"),
         col_6(
           selectInput(ns("metric"), 
@@ -57,6 +57,10 @@ mod_kmedoids_server <- function(id, dta, seed = reactive(123)){
       )
     }, priority = 10)
     
+    observeEvent(input$n_clust, {
+      
+      shinyFeedback::feedbackDanger("n_clust", input$n_clust<2, "Set to 2 clusters or more")
+    })
     
     dta_cleaned <- reactive({
       
@@ -115,6 +119,10 @@ mod_kmedoids_server <- function(id, dta, seed = reactive(123)){
       # checks before running
       # 1. k<n_obs, 
       req(diss_matrix())
+      
+      validate(
+        need(input$n_clust>1, "Please indicate 2 or more clusters")
+      )
       
       tryCatch(
         expr = {

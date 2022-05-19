@@ -24,7 +24,7 @@ mod_kmeans_ui <- function(id){
         ),
         fluidRow(
           col_4(
-            numericInput(ns("n_clust"), "Number of clusters", value = 3),  style = "margin-top: 17px"),
+            numericInput(ns("n_clust"), "Number of clusters", value = 3, min = 2),  style = "margin-top: 17px"),
           col_4(
             numericInput(ns("iter.max"), "Maximum number of iterations", value = 1)),
           col_4(
@@ -55,6 +55,12 @@ mod_kmeans_server <- function(id, dta, seed = reactive(123)){
                                       choices = names(dta()))
 
     }, priority = 10)
+    
+    
+    observeEvent(input$n_clust, {
+      
+      shinyFeedback::feedbackDanger("n_clust", input$n_clust<2, "Set to 2 clusters or more")
+    })
     
     dta_cleaned <- reactive({
       
@@ -101,6 +107,10 @@ mod_kmeans_server <- function(id, dta, seed = reactive(123)){
     k_means <- reactive({
       
       req(dta_cleaned())
+      
+      validate(
+        need(input$n_clust>1, "Please indicate 2 or more clusters")
+      )
       
       tryCatch(
         expr = {
