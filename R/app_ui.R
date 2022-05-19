@@ -58,12 +58,11 @@ app_ui <- function(request) {
           #     mod_hclust_ui("hlust_ui_1")
           #   )
           # ),
-          p(tags$b("3. Internal validation")),
-          p("Get descriptives of ", em("Internal validation"), "statistics.",
-            a(href = "https://arxiv.org/pdf/1503.02059.pdf", "see p.25 here")),
-          
-          p("3. Go to ", em("Evaluate"), " tab and select variables
-                   to see their distribution within the clusters, with graphs and tables"),
+          # p(tags$b("3. Internal validation")),
+          # p("Get descriptives of ", em("Internal validation"), "statistics.",
+          #   a(href = "https://arxiv.org/pdf/1503.02059.pdf", "see p.25 here")),
+          # p("3. Go to ", em("Evaluate"), " tab and select variables
+          #          to see their distribution within the clusters, with graphs and tables"),
           hr(),
           h4("A few words on the app"),
           p("The app is using the R packages: ",
@@ -93,7 +92,7 @@ app_ui <- function(request) {
         mainPanel(
           
           tabsetPanel(
-            selected = "Internal Validation",
+            selected = "Cluster Solution",
             tabPanel("Data",
                      br(),
                      p("The Data"),
@@ -104,7 +103,7 @@ app_ui <- function(request) {
                      reactable::reactableOutput("dta"),
                      width = 8
             ),
-            tabPanel("Internal Validation",
+            tabPanel("Cluster Solution",
                      fluidRow(
                        div(class = "info box", "-Select variables to continue-"),
                        #h3(id = "info_output", "-Select variables to continue-", style = "text-align: center"),

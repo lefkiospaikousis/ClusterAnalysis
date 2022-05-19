@@ -307,7 +307,8 @@ app_server <- function( input, output, session ) {
       reactable(
         highlight = TRUE, sortable = FALSE,
         columns = list(
-          #cluster = colDef(),
+          cluster = colDef(footer = p("Internal validation statistics from ",
+                                      a(href = "https://arxiv.org/pdf/1503.02059.pdf", "p.25 here"))),
           average.distance = colDef(header = with_tooltip("Average distance", vec_cluster_stats[["average.distance"]])),
           median.distance = colDef(header = with_tooltip("Median distance", vec_cluster_stats[["median.distance"]])),
           separation = colDef(header = with_tooltip("Separation", vec_cluster_stats[["separation"]])),
