@@ -2,20 +2,53 @@
 
 devtools::load_all()
 
-temp <- read_file("SampleData/sample_spss.sav")
+path <- "C:/Users/pcuser/OneDrive/Students/VARIOUS/Georgia Charalampous/Data/employee_satisfaction_data.xlsx"
+path <- "SampleData/sample_spss.sav"
+
+temp <- read_file(path)
+
+# nms <- names(temp) 
+# 
+# new_names <- nms %>% stringr::str_trunc(10)
+# 
+# names(temp) %>% 
+#   stringr::str_trunc(20) 
+#   nchar()
+# 
+#   names(temp) <- make.unique(new_names)
+#   
+#   temp %>% 
+#     #select(all_of(vars_cluster())) %>% 
+#     purrr::keep(is.numeric) %>% 
+#     mutate(across(where(is.numeric), scale2, na.rm = TRUE))
+#     mutate_if(is.numeric, ~ scale2(., na.rm = TRUE)) %>% 
+#     as.data.frame()
+#   
+#   
+# 
+# 
+# make.names(new_names, unique = TRUE)
+# 
+# stringr::str_
+# readxl::read_xlsx(path, .name_repair = "universal") 
+# 
+# safe_read <- purrr::safely(read_file)
+# 
+# safe_read("SampleData/sample_tbl_silhouette.rds")
+
 
 lab_list <- get_var_labels(temp)
 
 vars_for_cluster <- c("bill_length_mm", "bill_depth_mm", "flipper_length_mm")
-
-labelled::var_label(temp) <- NULL
-
-purrr::map(names(temp), function(x){
-  
-  attr(temp[[x]], "label") <<- lab_list[[x]]
-  
-})
-
+# vars_for_cluster <- c("bill_length_mm", "bill_depth_mm", "flipper_length_mm")
+# 
+# labelled::var_label(temp) <- NULL
+# 
+# purrr::map(names(temp), function(x){
+#   
+#   attr(temp[[x]], "label") <<- lab_list[[x]]
+#   
+# })
 
 
 dta <- 
@@ -50,7 +83,7 @@ sum(is.na(diss_matrix))
 res_kmeans <- kmeans(dta_clust, 3, nstart = 25)
 class(res_kmeans)
 
-
+res_kmeans$centers %>% dimnames() %>% .[[2]]
 # k meds ----
 res_pam <- cluster::pam(diss_matrix, k = 3)
 class(res_pam)
@@ -74,22 +107,55 @@ class(res_agnes)
 ids <- attr(diss_matrix, "Labels")
 res_agnes$cluster <- stats::cutree(res_agnes, 3) %>% setNames(ids)
 
+nrow(dta_clust)
+
+
+cluster_stats <- fpc::cluster.stats(
+  d = diss_matrix, 
+  clustering = res_kmeans$cluster)
+
+as_tbl_sep_matrix(cluster_stats$separation.matrix)
+
+gg_separation_matrix(cluster_stats$separation.matrix)
+
+length(unique(dim(cluster_stats$separation.matrix))) == 1
+
+cluster_stats$separation.matrix %>% gg_separation_matrix()
+
+matrix(
+  c(0, 1.06, 2.4, 
+    1.06, 0, 2.03, 
+    2.4, 2.03, 0), 
+  nrow = 3, ncol = 3
+  ) %>% 
+  gg_separation_matrix()
+
+# Silhouette are defined for 2 <= k <= n-1; k-cluster, n subjects
+# cluster::silhouette(res_agnes$cluster, diss_matrix)
+# 
+# get_sil_widths(res_agnes, diss_matrix)
+
 
 ## silhouette widths ---
 
 res_kmeans$silhouette <- get_sil_widths(res_kmeans, diss_matrix)
 
-get_sil_widths(res_agnes, diss_matrix)
+tbl_sil <- get_sil_widths(res_kmeans, diss_matrix)
 
-tbl_sil <- res_kmeans$silhouette
 
 dta %>% 
   left_join(tbl_sil, by = ".rowid", suffix = c("_varOfDF", "")) 
 
-
+dta_updt <- 
 dta %>% 
   add_silhouette(tbl_sil)
 
+glimpse(dta_updt)
+
+library(ggplot2)
+dta_updt %>% 
+  select(vars_for_cluster, cluster) %>% 
+  plot_density()
 # Aggregated Tbl silhouette
 
 # a list of statistics for silhouette summaries
