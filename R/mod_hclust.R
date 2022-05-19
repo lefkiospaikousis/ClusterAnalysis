@@ -34,7 +34,7 @@ mod_hclust_ui <- function(id){
         )
       ), #,  class = "small-font"),
       column(width = 5,
-             selectInput(ns("hc_linkage"), "Linkage method", 
+             selectInput(ns("hc_linkage"), span("Linkage method", actionLink(ns('show_link_methods'), "?")),#"Linkage method", 
                          choices = c("Ward's method" = "ward", 
                                      "Single linkage" = "single", 
                                      "Complete linkage" = "complete", 
@@ -42,7 +42,8 @@ mod_hclust_ui <- function(id){
                                      "Weighted Average linkage (WPGMA)" = "average")
                          
                          
-             ),  style = "margin-top: 17px"
+             )
+             ,  style = "margin-top: 17px"
       ) #,  class = "small-font", style = "margin-top: 15px")
       
     )
@@ -65,6 +66,31 @@ mod_hclust_server <- function(id, dta, seed = reactive(123)){
       )
       
     }, priority = 10)
+    
+    observeEvent(input$show_link_methods, {
+      
+      showModal(modalDialog(
+        title = "Linkage measures", size = "m",
+        tagList(
+          p(strong("Linkage methods")),
+          p("Different linkage methods produce quite different clusters. 
+                Both Single and Complete Linkage are rather too extreme for many applications,
+                although they may be useful in a few specific cases"),
+          tags$ul(
+            tags$li("Single linkage"),
+            p("focuses totally on separation, i.e., keeping the closest points of different
+                clusters apart from each other"),
+            tags$li("Complete linkage"),
+            p("focuses totally on keeping the largest dissimilarity within a cluster low"),
+            tags$li("Other linkage"),
+            p("Most other hierarchical
+                methods are a compromise between the above two extremes")
+          ),
+          HTML('<img src="www/linkage.jpg" width="450" height="350" alt="linkage measures explanation">')
+        )
+        
+      ))
+    })
     
     dta_cleaned <- reactive({
       
