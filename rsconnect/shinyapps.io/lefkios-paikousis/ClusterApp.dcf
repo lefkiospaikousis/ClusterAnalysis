@@ -1,0 +1,14 @@
+name: ClusterApp
+title: ClusterApp
+username:
+account: lefkios-paikousis
+server: shinyapps.io
+hostUrl: https://api.shinyapps.io/v1
+appId: 6335865
+bundleId: 5923936
+url: https://lefkios-paikousis.shinyapps.io/ClusterApp/
+when: 1652983572.95457
+lastSyncTime: 1652983572.95457
+asMultiple: FALSE
+asStatic: FALSE
+ignoredFiles: ch8.pdf|Scripts/test1.R|SampleData
