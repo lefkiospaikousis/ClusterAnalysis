@@ -21,6 +21,7 @@ app_ui <- function(request) {
       sidebarLayout(
         sidebarPanel(
           p(tags$b("Upload a dataset")),
+          #div( "?", class = "help-symbol"),
           span(id = "sample_data_info", "Currently installed: ", 
             a(href = "https://allisonhorst.github.io/palmerpenguins/", "palmerpenguins")
             ),
