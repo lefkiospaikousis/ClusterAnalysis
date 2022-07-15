@@ -13,3 +13,4 @@ $run_dev.*
 ^Resources\.txt$
 ^Docs$
 ^LICENSE\.md$
+^\.github$

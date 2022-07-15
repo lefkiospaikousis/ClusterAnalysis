@@ -7,6 +7,7 @@
 
 [![Lifecycle:
 experimental](https://img.shields.io/badge/lifecycle-experimental-orange.svg)](https://lifecycle.r-lib.org/articles/stages.html#experimental)
+[![check-release](https://github.com/lefkiospaikousis/ClusterAnalysis/actions/workflows/check-release.yaml/badge.svg)](https://github.com/lefkiospaikousis/ClusterAnalysis/actions/workflows/check-release.yaml)
 <!-- badges: end -->
 
 This is a Shiny App for cluster analysis.
