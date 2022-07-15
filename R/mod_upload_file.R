@@ -19,7 +19,8 @@ mod_upload_file_ui <- function(id){
 }
 
 #' upload_file Server Functions
-#'
+#' 
+#' @param id Internal parameters for {shiny}.
 #' @noRd
 mod_upload_file_server <- function(id){
   moduleServer( id, function(input, output, session){

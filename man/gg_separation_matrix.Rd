@@ -10,7 +10,7 @@ gg_separation_matrix(sep_matrix)
 \item{sep_matrix}{An nxn matrix.}
 }
 \value{
-
+A ggplot object
 }
 \description{
 This function plots a tile plot of the separation matrix of a cluster solution

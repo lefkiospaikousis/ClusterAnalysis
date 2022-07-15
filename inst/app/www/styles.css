@@ -6,6 +6,16 @@
 }
 
 
+.help-symbol {
+  
+  color: firebrick;
+  font-size: 35px;
+}
+
+.help-symbol:hover {
+    color: bisque;
+    background-color: white;
+}
 /* Put shiny notifications front and center */
 /*https://github.com/rstudio/shiny/issues/2988*/
 

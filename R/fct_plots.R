@@ -68,7 +68,7 @@ gg_density_plot <- function(dta){
 #'
 #' @param sep_matrix An nxn matrix. 
 #'
-#' @return
+#' @return A ggplot object
 #' @export
 gg_separation_matrix <- function(sep_matrix) {
   

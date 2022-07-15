@@ -10,3 +10,6 @@ $run_dev.*
 ^Scripts$
 ^app\.R$
 ^rsconnect$
+^Resources\.txt$
+^Docs$
+^LICENSE\.md$

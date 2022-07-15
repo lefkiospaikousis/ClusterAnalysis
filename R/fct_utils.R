@@ -1,5 +1,3 @@
-
-
 #' Clean .sav (SPSS) files
 #'
 #' A function to clean the imported SPSS file
@@ -29,7 +27,18 @@ clean_sav <- function(dta){
   
 }
 
-
+#' Standardise a numeric vector
+#' 
+#' The base::scale returns a matrix/ array (?) WTF
+#' 
+#' @noRd
+scale2 <- function(x, na.rm = TRUE) {
+  
+  stopifnot(is.numeric(x))
+  
+  (x - mean(x, na.rm = na.rm)) / sd(x, na.rm)
+  
+}
 
 #' Get the variable labels
 #' 
@@ -47,30 +56,17 @@ get_var_labels <- function(x, unlist = FALSE) {
     r
 }
 
-#' Standardise a variable
-#' 
-#' @param x A numeric vector
+#' Find variables within a dataset
+#'  
+#' This function finds variables of a specific type within a dataset
+#'  
+#' Adapted (i.e. stolen) from 
+#' https://mastering-shiny.org/scaling-modules.html#case-study-selecting-a-numeric-variable
+#' The \code{type} argument will lead to a function - Usually \code{is.numeric} or \code{is.character}
+#' @param data A dataframe
+#' @param type The type of the variable. One of c("numeric", "character", "factor")
 #' @export
-scale2 <- function(x, na.rm = TRUE) {
-  
-  stopifnot(is.numeric(x))
-  
-  (x - mean(x, na.rm = na.rm)) / sd(x, na.rm)
-  
-}
-
-
-#'  Find variables within a dataset
-#'  
-#'  This function finds variables of a specific type within a dataset
-#'  
-#'  Adapted (i.e. stolen) from 
-#'  https://mastering-shiny.org/scaling-modules.html#case-study-selecting-a-numeric-variable
-#'  The \code{type} argument will lead to a function - Usually \code{is.numeric} or \code{is.character}
-#'  @param data A dataframe
-#'  @param type The type of the variable. One of c("numeric", "character", "factor")
-#'  @export
-#'  @return A character vector of variable names 
+#' @return A character vector of variable names 
 vars_of_type <- function(data, type =  c("numeric", "character", "factor")) {
   
   stopifnot(is.data.frame(data))
@@ -117,11 +113,11 @@ plot_nodata_gg <- function() {
 
 #' Calculate the dissimilarity matrix
 #' 
-#' Uses the \code{cluster::daisy} function. This function
-#' needs the character columns as factors to properly function
+#' Uses the \code{cluster::daisy} function. This function needs 
+#' the character columns as factors to properly function
 #' 
 #' @param dta A dataframe. The data
-#' @param metric The metric to use %>% 
+#' @param metric The metric to use
 #' @export
 calc_diss_matrix <- function(dta, metric = c("euclidean", "manhattan", "gower")){
   
@@ -298,7 +294,7 @@ info <- function() {
     
     silhouette = "The silhouette value is a measure of how similar an object is 
     to its own cluster (cohesion) compared to other clusters (separation). 
-    The silhouette ranges from −1 to +1, where a high value indicates that the 
+    The silhouette ranges from -1 to +1, where a high value indicates that the 
     object is well matched to its own cluster and poorly matched to neighboring 
     clusters. If most objects have a high value, then the clustering configuration 
     is appropriate. If many points have a low or negative value, then the 

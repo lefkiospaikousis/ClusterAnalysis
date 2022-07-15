@@ -6,6 +6,9 @@
 \usage{
 mod_upload_file_server(id)
 }
+\arguments{
+\item{id}{Internal parameters for {shiny}.}
+}
 \description{
 upload_file Server Functions
 }

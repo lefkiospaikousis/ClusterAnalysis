@@ -9,9 +9,9 @@ calc_diss_matrix(dta, metric = c("euclidean", "manhattan", "gower"))
 \arguments{
 \item{dta}{A dataframe. The data}
 
-\item{metric}{The metric to use %>%}
+\item{metric}{The metric to use}
 }
 \description{
-Uses the \code{cluster::daisy} function. This function
-needs the character columns as factors to properly function
+Uses the \code{cluster::daisy} function. This function needs 
+the character columns as factors to properly function
 }

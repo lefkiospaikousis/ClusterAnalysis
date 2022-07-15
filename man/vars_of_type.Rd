@@ -4,28 +4,28 @@
 \alias{vars_of_type}
 \title{Find variables within a dataset
  
- This function finds variables of a specific type within a dataset
+This function finds variables of a specific type within a dataset
  
- Adapted (i.e. stolen) from 
- https://mastering-shiny.org/scaling-modules.html#case-study-selecting-a-numeric-variable
- The \code{type} argument will lead to a function - Usually \code{is.numeric} or \code{is.character}
- @param data A dataframe
- @param type The type of the variable. One of c("numeric", "character", "factor")
- @export
- @return A character vector of variable names}
+Adapted (i.e. stolen) from 
+https://mastering-shiny.org/scaling-modules.html#case-study-selecting-a-numeric-variable
+The \code{type} argument will lead to a function - Usually \code{is.numeric} or \code{is.character}}
 \usage{
 vars_of_type(data, type = c("numeric", "character", "factor"))
+}
+\arguments{
+\item{data}{A dataframe}
+
+\item{type}{The type of the variable. One of c("numeric", "character", "factor")}
+}
+\value{
+A character vector of variable names
 }
 \description{
 Find variables within a dataset
  
- This function finds variables of a specific type within a dataset
+This function finds variables of a specific type within a dataset
  
- Adapted (i.e. stolen) from 
- https://mastering-shiny.org/scaling-modules.html#case-study-selecting-a-numeric-variable
- The \code{type} argument will lead to a function - Usually \code{is.numeric} or \code{is.character}
- @param data A dataframe
- @param type The type of the variable. One of c("numeric", "character", "factor")
- @export
- @return A character vector of variable names
+Adapted (i.e. stolen) from 
+https://mastering-shiny.org/scaling-modules.html#case-study-selecting-a-numeric-variable
+The \code{type} argument will lead to a function - Usually \code{is.numeric} or \code{is.character}
 }

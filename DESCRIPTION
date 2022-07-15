@@ -3,7 +3,7 @@ Title: Cluster Analysis
 Version: 0.0.0.9000
 Authors@R: person('Lefkios', 'Paikousis', email = 'lefkiospaikousis@yahoo.com', role = c('cre', 'aut'))
 Description: A Shiny app for Cluster Analysis
-License: What license is it under?
+License: MIT + file LICENSE
 Imports: 
     attempt,
     bslib,
@@ -23,6 +23,7 @@ Imports:
     purrr,
     reactable,
     readxl,
+    rlang,
     shiny (>= 1.6.0),
     shinyFeedback,
     shinyjs,
