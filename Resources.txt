@@ -1,0 +1,5 @@
+https://www.saedsayad.com/clustering_hierarchical.htm
+https://datastoriesweb.wordpress.com/2018/12/09/hierarchical-clustering/
+https://stats.stackexchange.com/questions/195446/choosing-the-right-linkage-method-for-hierarchical-clustering
+https://stats.stackexchange.com/questions/195456/how-to-select-a-clustering-method-how-to-validate-a-cluster-solution-to-warran/195481#195481
+https://stats.stackexchange.com/questions/3713/choosing-a-clustering-method
